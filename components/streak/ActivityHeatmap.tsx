@@ -284,7 +284,7 @@ export function ActivityHeatmap({ sessions, className }: ActivityHeatmapProps) {
         <div className="space-y-2">
           <div className="flex">
             {/* Day labels */}
-            <div className="flex flex-col justify-between pr-2 py-0.5 min-w-[18px]">
+            <div className="flex flex-col justify-between pr-1 py-0.5 min-w-[18px]">
               {dayLabelsShort.map((label, i) => (
                 <div
                   key={i}
