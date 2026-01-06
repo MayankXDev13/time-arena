@@ -30,12 +30,13 @@ interface YearData {
   weeks: WeekData[];
 }
 
+// Clear activity levels: 0 → 5 → 15 → 30 → 60+ minutes
 const colorLevels = [
-  { threshold: 0, className: 'bg-zinc-700 hover:bg-zinc-600' },
-  { threshold: 5, className: 'bg-emerald-900/60 hover:bg-emerald-800/70' },
-  { threshold: 15, className: 'bg-emerald-700/70 hover:bg-emerald-600/80' },
-  { threshold: 30, className: 'bg-orange-600/80 hover:bg-orange-500/90' },
-  { threshold: 60, className: 'bg-orange-500 hover:bg-orange-400' },
+  { level: 0, threshold: 0, className: 'bg-zinc-800 hover:bg-zinc-700', label: 'None' },
+  { level: 1, threshold: 5, className: 'bg-blue-900 hover:bg-blue-800', label: 'Low' },
+  { level: 2, threshold: 15, className: 'bg-blue-700 hover:bg-blue-600', label: 'Light' },
+  { level: 3, threshold: 30, className: 'bg-orange-600 hover:bg-orange-500', label: 'Medium' },
+  { level: 4, threshold: 60, className: 'bg-orange-500 hover:bg-orange-400', label: 'High' },
 ];
 
 function getColorClass(minutes: number): string {
@@ -45,6 +46,15 @@ function getColorClass(minutes: number): string {
     }
   }
   return colorLevels[0].className;
+}
+
+function getActivityLevel(minutes: number): number {
+  for (const level of colorLevels.slice().reverse()) {
+    if (minutes >= level.threshold) {
+      return level.level;
+    }
+  }
+  return 0;
 }
 
 function generateYearData(year: number, sessions: Session[]): YearData {
@@ -122,6 +132,7 @@ function generateYearData(year: number, sessions: Session[]): YearData {
 }
 
 const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const dayLabelsShort = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 function HeatmapCell({ day, colorClass, isToday, onClick }: { day: DailyData; colorClass: string; isToday: boolean; onClick: () => void }) {
   const formattedDate = format(new Date(day.dateStr), 'MMM d, yyyy');
@@ -131,25 +142,32 @@ function HeatmapCell({ day, colorClass, isToday, onClick }: { day: DailyData; co
     ? `${Math.round(day.minutes)}m`
     : `${Math.floor(day.minutes / 60)}h ${Math.round(day.minutes % 60)}m`;
 
+  const activityLevel = getActivityLevel(day.minutes);
+
   return (
     <Tooltip.Root>
       <Tooltip.Trigger asChild>
         <button
           onClick={onClick}
           className={cn(
-            'w-2.5 h-2.5 rounded-[2px] transition-all duration-200 cursor-pointer',
-            'hover:scale-125 hover:z-10 focus:outline-none focus:ring-2 focus:ring-orange-500/50',
+            'w-3 h-3 rounded-sm transition-all duration-200 cursor-pointer',
+            'hover:scale-110 hover:z-10 focus:outline-none focus:ring-1 focus:ring-orange-400',
+            'border border-transparent hover:border-zinc-600',
             colorClass,
-            isToday && 'ring-1 ring-white ring-offset-0.5 ring-offset-black'
+            isToday && 'ring-2 ring-orange-400 ring-offset-1 ring-offset-zinc-900'
           )}
-          style={{ width: '10px', height: '10px' }}
+          style={{ width: '12px', height: '12px' }}
+          aria-label={`${formattedDate}: ${timeDisplay} of activity`}
         />
       </Tooltip.Trigger>
       <Tooltip.Portal>
-        <Tooltip.Content className="z-50 overflow-hidden rounded-md bg-zinc-900 px-3 py-1.5 text-sm text-white shadow-md border border-zinc-800">
-          <div className="text-sm">
+        <Tooltip.Content className="z-50 overflow-hidden rounded-md bg-zinc-900 px-3 py-2 text-sm text-white shadow-lg border border-zinc-700">
+          <div className="space-y-1">
             <div className="font-medium">{formattedDate}</div>
-            <div className="text-zinc-400">{timeDisplay}</div>
+            <div className="text-zinc-300">{timeDisplay} focused</div>
+            <div className="text-xs text-zinc-500 capitalize">
+              {colorLevels[activityLevel]?.label || 'No'} activity
+            </div>
           </div>
           <Tooltip.Arrow className="fill-zinc-900" />
         </Tooltip.Content>
@@ -160,15 +178,16 @@ function HeatmapCell({ day, colorClass, isToday, onClick }: { day: DailyData; co
 
 function HeatmapLegend() {
   return (
-    <div className="flex items-center gap-1.5 text-xs text-zinc-500">
-      <span>Less</span>
+    <div className="flex items-center gap-2 text-xs">
+      <span className="text-zinc-500 font-medium">Less</span>
       {colorLevels.map((level, i) => (
         <div
           key={i}
-          className={cn('w-3 h-3 rounded-sm', level.className)}
+          className={cn('w-3 h-3 rounded-sm border border-zinc-700', level.className)}
+          title={`${level.label} activity (${level.threshold}+ minutes)`}
         />
       ))}
-      <span>More</span>
+      <span className="text-zinc-500 font-medium">More</span>
     </div>
   );
 }
@@ -248,48 +267,56 @@ export function ActivityHeatmap({ sessions, className }: ActivityHeatmapProps) {
 
   return (
     <Tooltip.Provider>
-      <div className={cn('space-y-4', className)}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      <div className={cn('space-y-6', className)}>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-4">
             <YearSelector
               selectedYear={selectedYear}
               onYearChange={setSelectedYear}
               years={years}
             />
             <div>
-              <h3 className="text-lg font-semibold text-white">Activity</h3>
+              <h3 className="text-lg font-semibold text-white mb-1">Activity</h3>
               <p className="text-sm text-zinc-400">
                 {Math.round(selectedYearMinutes)}m in {selectedYear} • {Math.round(todayMinutes)}m today
               </p>
             </div>
           </div>
-          <HeatmapLegend />
+          <div className="flex-shrink-0">
+            <HeatmapLegend />
+          </div>
         </div>
 
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium text-zinc-500">{selectedYear}</h4>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-medium text-zinc-400">{selectedYear}</h4>
+            <div className="text-xs text-zinc-600">Activity levels</div>
+          </div>
           <div className="flex">
-            <div className="flex flex-col justify-between pr-2 py-1">
-              {dayLabels.map((label, i) => (
+            {/* Day labels */}
+            <div className="flex flex-col justify-between pr-3 py-1 min-w-[24px]">
+              {dayLabelsShort.map((label, i) => (
                 <div
                   key={i}
-                  className="h-2.5 text-[11px] text-zinc-400 flex items-center font-medium"
-                  style={{ height: '10px' }}
+                  className="h-3 text-[10px] text-zinc-500 flex items-center justify-end font-medium leading-none"
+                  style={{ height: '12px' }}
                 >
-                  {i % 2 === 0 ? label : ''}
+                  {label}
                 </div>
               ))}
             </div>
-            <div className="flex gap-px overflow-x-auto">
+
+            {/* Heatmap grid */}
+            <div className="flex gap-0.5 overflow-x-auto">
               {yearData.weeks.map((week, weekIndex) => (
-                <div key={weekIndex} className="flex flex-col gap-px">
+                <div key={weekIndex} className="flex flex-col gap-0.5">
                   {week.days.map((day, dayIndex) => {
                     if (!day) {
                       return (
                         <div
                           key={dayIndex}
-                          className="w-2.5 h-2.5"
-                          style={{ width: '10px', height: '10px' }}
+                          className="w-3 h-3 bg-zinc-900/50 rounded-sm border border-zinc-800/50"
+                          style={{ width: '12px', height: '12px' }}
                         />
                       );
                     }
@@ -303,10 +330,15 @@ export function ActivityHeatmap({ sessions, className }: ActivityHeatmapProps) {
                       />
                     );
                   })}
+
+                  {/* Month labels */}
                   {weekIndex % 4 === 0 && week.monthLabel && (
-                    <div className="text-[12px] text-zinc-400 font-semibold text-center pt-1 leading-tight">
+                    <div className="text-[11px] text-zinc-500 font-medium text-center pt-2 leading-tight min-h-[16px] flex items-center justify-center">
                       {week.monthLabel}
                     </div>
+                  )}
+                  {weekIndex % 4 !== 0 && (
+                    <div className="min-h-[16px]" />
                   )}
                 </div>
               ))}
