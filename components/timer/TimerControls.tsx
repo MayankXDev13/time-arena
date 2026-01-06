@@ -35,28 +35,39 @@ export function TimerControls({
     }
   };
 
+  const getPlayButtonStyle = () => {
+    if (isCompleted) {
+      return 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg shadow-green-500/25';
+    }
+    if (isRunning) {
+      return 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg shadow-orange-500/25';
+    }
+    return 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg shadow-orange-500/25';
+  };
+
   return (
-    <div className="flex items-center justify-center gap-4">
+    <div className="flex items-center justify-center gap-6 mt-12">
       <Button
         onClick={stop}
         disabled={!isRunning && elapsed === 0 && !isCompleted}
-        variant="outline"
         size="lg"
-        className="border-zinc-700 hover:bg-zinc-800 hover:text-orange-500 transition-colors"
+        className={cn(
+          'w-16 h-16 rounded-full border-2 transition-all duration-300',
+          'hover:scale-110 active:scale-95',
+          'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 hover:border-zinc-600',
+          'disabled:opacity-50 disabled:cursor-not-allowed'
+        )}
       >
-        <PiStopFill className="w-6 h-6" />
+        <PiStopFill className="w-6 h-6 text-zinc-400" />
       </Button>
 
       <Button
         onClick={handleStartPause}
         size="lg"
         className={cn(
-          'w-20 h-20 rounded-full text-xl font-semibold transition-all hover:scale-105 active:scale-95 shadow-lg',
-          isCompleted
-            ? 'bg-green-500 hover:bg-green-600 text-white'
-            : isRunning
-            ? 'bg-orange-500 hover:bg-orange-600 text-white'
-            : 'bg-orange-500 hover:bg-orange-600 text-white'
+          'w-20 h-20 rounded-full transition-all duration-300 shadow-xl',
+          'hover:scale-110 active:scale-95',
+          getPlayButtonStyle()
         )}
       >
         {isCompleted ? (
@@ -71,11 +82,15 @@ export function TimerControls({
       <Button
         onClick={reset}
         disabled={!isRunning && elapsed === 0 && !isCompleted}
-        variant="outline"
         size="lg"
-        className="border-zinc-700 hover:bg-zinc-800 hover:text-orange-500 transition-colors"
+        className={cn(
+          'w-16 h-16 rounded-full border-2 transition-all duration-300',
+          'hover:scale-110 active:scale-95',
+          'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 hover:border-zinc-600',
+          'disabled:opacity-50 disabled:cursor-not-allowed'
+        )}
       >
-        <PiArrowCounterClockwiseFill className="w-6 h-6" />
+        <PiArrowCounterClockwiseFill className="w-6 h-6 text-zinc-400" />
       </Button>
     </div>
   );

@@ -1,6 +1,7 @@
 import { formatTime } from '@/utils/helpers';
 import { cn } from '@/lib/utils';
 import type { TimerMode } from '@/stores/useTimerStore';
+import { CircularProgress } from '@/components/ui/circular-progress';
 
 interface TimerDisplayProps {
   elapsed: number;
@@ -20,45 +21,60 @@ export function TimerDisplay({
   breakDuration,
 }: TimerDisplayProps) {
   const targetDuration = mode === 'work' ? workDuration * 60 : breakDuration * 60;
+  const progress = targetDuration > 0 ? Math.max(0, elapsed / targetDuration) : 0;
+  const remaining = Math.max(0, targetDuration - elapsed);
 
   return (
     <div className="relative flex flex-col items-center">
-      <div
-        className={cn(
-          'text-7xl md:text-9xl font-mono font-bold tabular-nums tracking-tight',
-          'transition-all duration-300',
-          isRunning && 'animate-pulse',
-          mode === 'work' ? 'text-white' : 'text-green-400',
-          isCompleted && 'text-orange-500'
-        )}
+      <CircularProgress
+        progress={progress}
+        size={320}
+        strokeWidth={12}
+        mode={mode}
+        isRunning={isRunning}
+        isCompleted={isCompleted}
       >
-        {isCompleted ? '00:00' : formatTime(elapsed)}
-      </div>
+        <div className="text-center">
+          <div
+            className={cn(
+              'text-6xl md:text-8xl font-mono font-bold tabular-nums tracking-tight',
+              'transition-all duration-300',
+              isRunning && 'animate-pulse',
+              mode === 'work' ? 'text-white' : 'text-green-400',
+              isCompleted && 'text-orange-500'
+            )}
+          >
+            {isCompleted ? '00:00' : formatTime(remaining)}
+          </div>
+        </div>
+      </CircularProgress>
+
       {isCompleted && (
-        <div className="absolute -inset-4 rounded-full bg-orange-500/20 blur-2xl animate-pulse" />
-      )}
-      {isRunning && !isCompleted && (
-        <div
-          className={cn(
-            'absolute -inset-4 rounded-full blur-2xl animate-pulse',
-            mode === 'work' ? 'bg-orange-500/10' : 'bg-green-500/10'
-          )}
-        />
-      )}
-      <div className="mt-4 text-sm text-zinc-500">
-        {isCompleted ? (
-          <span className="text-orange-500 font-medium">Session Complete!</span>
-        ) : (
-          <>
-            {mode === 'work' ? 'Focus time' : 'Break time'} • {Math.ceil(elapsed / 60)} min remaining
-          </>
-        )}
-      </div>
-      {isCompleted && (
-        <div className="mt-2 text-xs text-zinc-500">
-          Tap reset to start a new session
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="text-center">
+            <div className="text-4xl md:text-6xl font-mono font-bold text-orange-500 animate-pulse">
+              00:00
+            </div>
+          </div>
         </div>
       )}
+
+      <div className="mt-8 text-center">
+        <div className="text-sm text-zinc-500">
+          {isCompleted ? (
+            <span className="text-orange-500 font-medium">Session Complete!</span>
+          ) : (
+            <>
+              {mode === 'work' ? 'Focus time' : 'Break time'} • {Math.ceil(remaining / 60)} min remaining
+            </>
+          )}
+        </div>
+        {isCompleted && (
+          <div className="mt-2 text-xs text-zinc-500">
+            Tap reset to start a new session
+          </div>
+        )}
+      </div>
     </div>
   );
 }
