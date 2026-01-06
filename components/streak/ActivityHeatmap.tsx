@@ -30,13 +30,13 @@ interface YearData {
   weeks: WeekData[];
 }
 
-// Clear activity levels: 0 → 5 → 15 → 30 → 60+ minutes
+// Subtle activity levels with clear progression (app theme)
 const colorLevels = [
-  { level: 0, threshold: 0, className: 'bg-zinc-800 hover:bg-zinc-700', label: 'None' },
-  { level: 1, threshold: 5, className: 'bg-blue-900 hover:bg-blue-800', label: 'Low' },
-  { level: 2, threshold: 15, className: 'bg-blue-700 hover:bg-blue-600', label: 'Light' },
-  { level: 3, threshold: 30, className: 'bg-orange-600 hover:bg-orange-500', label: 'Medium' },
-  { level: 4, threshold: 60, className: 'bg-orange-500 hover:bg-orange-400', label: 'High' },
+  { level: 0, threshold: 0, className: 'bg-zinc-800 hover:bg-zinc-700', label: 'No activity' },
+  { level: 1, threshold: 5, className: 'bg-orange-900/40 hover:bg-orange-800/50', label: 'Low activity' },
+  { level: 2, threshold: 15, className: 'bg-orange-800/50 hover:bg-orange-700/60', label: 'Light activity' },
+  { level: 3, threshold: 30, className: 'bg-orange-700/60 hover:bg-orange-600/70', label: 'Medium activity' },
+  { level: 4, threshold: 60, className: 'bg-orange-600/70 hover:bg-orange-500/80', label: 'High activity' },
 ];
 
 function getColorClass(minutes: number): string {
@@ -150,24 +150,20 @@ function HeatmapCell({ day, colorClass, isToday, onClick }: { day: DailyData; co
         <button
           onClick={onClick}
           className={cn(
-            'w-3 h-3 rounded-sm transition-all duration-200 cursor-pointer',
-            'hover:scale-110 hover:z-10 focus:outline-none focus:ring-1 focus:ring-orange-400',
-            'border border-transparent hover:border-zinc-600',
+            'w-3 h-3 rounded-[2px] transition-all duration-150 cursor-pointer',
+            'hover:opacity-80 focus:outline-none focus:ring-1 focus:ring-orange-400/50',
             colorClass,
-            isToday && 'ring-2 ring-orange-400 ring-offset-1 ring-offset-zinc-900'
+            isToday && 'ring-1 ring-orange-400 ring-offset-1 ring-offset-zinc-900'
           )}
           style={{ width: '12px', height: '12px' }}
           aria-label={`${formattedDate}: ${timeDisplay} of activity`}
         />
       </Tooltip.Trigger>
       <Tooltip.Portal>
-        <Tooltip.Content className="z-50 overflow-hidden rounded-md bg-zinc-900 px-3 py-2 text-sm text-white shadow-lg border border-zinc-700">
-          <div className="space-y-1">
-            <div className="font-medium">{formattedDate}</div>
-            <div className="text-zinc-300">{timeDisplay} focused</div>
-            <div className="text-xs text-zinc-500 capitalize">
-              {colorLevels[activityLevel]?.label || 'No'} activity
-            </div>
+        <Tooltip.Content className="z-50 overflow-hidden rounded-md bg-zinc-900 px-3 py-1.5 text-sm text-white shadow-lg border border-zinc-700/50">
+          <div className="text-center">
+            <div className="font-medium text-zinc-100">{timeDisplay}</div>
+            <div className="text-xs text-zinc-400 mt-0.5">{formattedDate}</div>
           </div>
           <Tooltip.Arrow className="fill-zinc-900" />
         </Tooltip.Content>
@@ -178,16 +174,16 @@ function HeatmapCell({ day, colorClass, isToday, onClick }: { day: DailyData; co
 
 function HeatmapLegend() {
   return (
-    <div className="flex items-center gap-2 text-xs">
-      <span className="text-zinc-500 font-medium">Less</span>
-      {colorLevels.map((level, i) => (
+    <div className="flex items-center gap-1.5 text-xs">
+      <span className="text-zinc-500">Less</span>
+      {colorLevels.slice(1).map((level, i) => (
         <div
           key={i}
-          className={cn('w-3 h-3 rounded-sm border border-zinc-700', level.className)}
-          title={`${level.label} activity (${level.threshold}+ minutes)`}
+          className={cn('w-2.5 h-2.5 rounded-[1px]', level.className)}
+          title={level.label}
         />
       ))}
-      <span className="text-zinc-500 font-medium">More</span>
+      <span className="text-zinc-500 ml-1">More</span>
     </div>
   );
 }
@@ -267,38 +263,32 @@ export function ActivityHeatmap({ sessions, className }: ActivityHeatmapProps) {
 
   return (
     <Tooltip.Provider>
-      <div className={cn('space-y-6', className)}>
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-4">
+      <div className={cn('space-y-4', className)}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
             <YearSelector
               selectedYear={selectedYear}
               onYearChange={setSelectedYear}
               years={years}
             />
             <div>
-              <h3 className="text-lg font-semibold text-white mb-1">Activity</h3>
+              <h3 className="text-lg font-semibold text-white">{selectedYear}</h3>
               <p className="text-sm text-zinc-400">
-                {Math.round(selectedYearMinutes)}m in {selectedYear} • {Math.round(todayMinutes)}m today
+                {Math.round(selectedYearMinutes)} minutes
               </p>
             </div>
           </div>
-          <div className="flex-shrink-0">
-            <HeatmapLegend />
-          </div>
+          <HeatmapLegend />
         </div>
 
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-medium text-zinc-400">{selectedYear}</h4>
-            <div className="text-xs text-zinc-600">Activity levels</div>
-          </div>
+        <div className="space-y-2">
           <div className="flex">
             {/* Day labels */}
-            <div className="flex flex-col justify-between pr-3 py-1 min-w-[24px]">
+            <div className="flex flex-col justify-between pr-2 py-0.5 min-w-[18px]">
               {dayLabelsShort.map((label, i) => (
                 <div
                   key={i}
-                  className="h-3 text-[10px] text-zinc-500 flex items-center justify-end font-medium leading-none"
+                  className="h-3 text-[9px] text-zinc-500 flex items-center justify-end font-medium leading-none"
                   style={{ height: '12px' }}
                 >
                   {label}
@@ -315,7 +305,7 @@ export function ActivityHeatmap({ sessions, className }: ActivityHeatmapProps) {
                       return (
                         <div
                           key={dayIndex}
-                          className="w-3 h-3 bg-zinc-900/50 rounded-sm border border-zinc-800/50"
+                          className="w-3 h-3"
                           style={{ width: '12px', height: '12px' }}
                         />
                       );
@@ -333,7 +323,7 @@ export function ActivityHeatmap({ sessions, className }: ActivityHeatmapProps) {
 
                   {/* Month labels */}
                   {weekIndex % 4 === 0 && week.monthLabel && (
-                    <div className="text-[11px] text-zinc-500 font-medium text-center pt-2 leading-tight min-h-[16px] flex items-center justify-center">
+                    <div className="text-[10px] text-zinc-500 font-medium text-center pt-2 leading-tight min-h-[16px] flex items-center justify-center">
                       {week.monthLabel}
                     </div>
                   )}
