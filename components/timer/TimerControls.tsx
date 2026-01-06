@@ -37,12 +37,12 @@ export function TimerControls({
 
   const getPlayButtonStyle = () => {
     if (isCompleted) {
-      return 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg shadow-green-500/25';
+      return 'bg-green-500 text-white';
     }
     if (isRunning) {
-      return 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg shadow-orange-500/25';
+      return 'bg-orange-500 text-white';
     }
-    return 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg shadow-orange-500/25';
+    return 'bg-orange-500 text-white';
   };
 
   return (

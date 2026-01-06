@@ -20,8 +20,8 @@ export function TimerModeSelector() {
       duration: workDuration,
       icon: PiClockBold,
       colors: {
-        active: 'bg-orange-500 hover:bg-orange-600 text-white border-orange-500',
-        inactive: 'bg-zinc-800 hover:bg-zinc-700 text-zinc-400 border-zinc-700',
+        active: 'bg-orange-500 text-white border-orange-500',
+        inactive: 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:bg-zinc-700',
       },
     },
     {
@@ -30,8 +30,8 @@ export function TimerModeSelector() {
       duration: breakDuration,
       icon: PiCoffeeBold,
       colors: {
-        active: 'bg-green-500 hover:bg-green-600 text-white border-green-500',
-        inactive: 'bg-zinc-800 hover:bg-zinc-700 text-zinc-400 border-zinc-700',
+        active: 'bg-green-500 text-white border-green-500',
+        inactive: 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:bg-zinc-700',
       },
     },
   ];

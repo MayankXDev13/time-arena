@@ -29,19 +29,19 @@ export function CircularProgress({
 
   const colors = {
     work: {
-      track: 'stroke-zinc-800',
+      track: 'stroke-zinc-700',
       progress: 'stroke-orange-500',
-      glow: 'drop-shadow-[0_0_20px_rgba(249,115,22,0.3)]',
+      glow: '',
     },
     break: {
-      track: 'stroke-zinc-800',
+      track: 'stroke-zinc-700',
       progress: 'stroke-green-500',
-      glow: 'drop-shadow-[0_0_20px_rgba(34,197,94,0.3)]',
+      glow: '',
     },
     completed: {
-      track: 'stroke-zinc-800',
+      track: 'stroke-zinc-700',
       progress: 'stroke-orange-500',
-      glow: 'drop-shadow-[0_0_20px_rgba(249,115,22,0.5)]',
+      glow: '',
     },
   };
 
@@ -54,8 +54,7 @@ export function CircularProgress({
         height={size}
         className={cn(
           'transform -rotate-90 transition-all duration-500',
-          isRunning && 'scale-105',
-          colorScheme.glow
+          isRunning && 'scale-105'
         )}
       >
         {/* Background circle */}
