@@ -3,10 +3,11 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { PiTimer, PiClockCounterClockwise, PiGear } from 'react-icons/pi';
+import { PiTimer, PiClockCounterClockwise, PiGear, PiChartBar } from 'react-icons/pi';
 
 const navItems = [
   { href: '/', label: 'Timer', icon: PiTimer },
+  { href: '/stats', label: 'Stats', icon: PiChartBar },
   { href: '/history', label: 'History', icon: PiClockCounterClockwise },
   { href: '/settings', label: 'Settings', icon: PiGear },
 ];
