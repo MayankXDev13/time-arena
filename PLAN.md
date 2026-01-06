@@ -13,6 +13,26 @@
 | Backend | Supabase (Auth + Database) |
 | State Management | Zustand + React hooks |
 | Storage | LocalStorage (offline) + Supabase (cloud sync) |
+| Icons | React Icons |
+
+## Color Scheme
+
+**Black, Orange, and White**
+
+| Role | Color | Tailwind Token |
+|------|-------|----------------|
+| Background | Black (#0A0A0A) | `bg-black` |
+| Surface | Dark Gray (#1A1A1A) | `bg-zinc-900` |
+| Primary | Vibrant Orange (#FF6B35) | `text-orange-500`, `bg-orange-500` |
+| Primary Hover | Darker Orange (#E55A2B) | `hover:bg-orange-600` |
+| Text Primary | White (#FFFFFF) | `text-white` |
+| Text Secondary | Light Gray (#A1A1AA) | `text-zinc-400` |
+| Border | Medium Gray (#3A3A3A) | `border-zinc-700` |
+
+**Accent Colors**
+- Streak fire: Bright Orange (#FF4500)
+- Success: Orange-White gradient
+- Timer active: Pulsing orange glow
 
 ---
 
@@ -172,54 +192,59 @@ time-arena/
 ## Implementation Phases
 
 ### Phase 1: Foundation
-1. Initialize Next.js project with Bun
-2. Install dependencies (Supabase, Zustand, date-fns, shadcn)
-3. Setup shadcn/ui with initial config
-4. Install shadcn components: button, card, dialog, input, label, select, switch, toast, skeleton, avatar, separator
+1. Initialize Next.js project with Bun ✓
+2. Install dependencies (Supabase, Zustand, date-fns, react-icons) ✓
+3. Setup shadcn/ui with initial config ✓
+4. Install shadcn components: button, card, dialog, input, label, select, switch, sonner, skeleton, avatar, separator ✓
 
 ### Phase 2: Core Types & Utilities
-5. Create TypeScript types (`src/types/index.ts`)
+5. Create TypeScript types (`types/index.ts`) ✓
 6. Create utility functions:
-   - `date.ts` - local date handling (YYYY-MM-DD)
-   - `streak.ts` - streak calculation
-   - `helpers.ts` - time formatting
+   - `utils/date.ts` - local date handling (YYYY-MM-DD) ✓
+   - `utils/streak.ts` - streak calculation ✓
+   - `utils/helpers.ts` - time formatting ✓
 
 ### Phase 3: State Management
-7. Setup Zustand stores with persistence:
-   - `useSessionStore.ts` - sessions + localStorage
-   - `useSettingsStore.ts` - user settings
-   - `useSyncStore.ts` - sync status
-8. Create custom hooks:
-   - `useAuth.ts` - Supabase auth
-   - `useSessions.ts` - session CRUD
-   - `useTimer.ts` - timer logic
-   - `useStreak.ts` - streak calculations
-   - `useSettings.ts` - settings CRUD
+7. Setup Zustand stores with persistence ✓
+   - `stores/useSessionStore.ts` - sessions + localStorage ✓
+   - `stores/useSettingsStore.ts` - user settings ✓
+   - `stores/useSyncStore.ts` - sync status ✓
+8. Create custom hooks ✓
+   - `hooks/useAuth.ts` - Supabase auth ✓
+   - `hooks/useSessions.ts` - session CRUD ✓
+   - `hooks/useTimer.ts` - timer logic ✓
+   - `hooks/useStreak.ts` - streak calculations ✓
+   - `hooks/useSettings.ts` - settings CRUD ✓
 
 ### Phase 4: UI Components
 9. Landing page with auth options
-10. Dashboard layout with navigation
-11. Timer components (Display, Controls, Main)
-12. Streak components (Tile, Header)
-13. Session components (Card, List, TodaySummary)
-14. Settings components
+10. Dashboard layout with navigation ✓
+11. Timer components (Display, Controls, Main) ✓
+12. Streak components (Tile, Header) ✓
+13. Session components (Card, List, TodaySummary) ✓
+14. Settings components ✓
 
 ### Phase 5: Pages
-15. Home page (Timer + Streak)
-16. History page (Session list)
-17. Settings page (Configuration)
+15. Home page (Timer + Streak) ✓
+16. History page (Session list) ✓
+17. Settings page (Configuration) ✓
 
 ### Phase 6: Supabase Integration
-18. Create and run database schema
-19. Implement auth flow (sign up/in/out)
-20. Implement sync logic (push/pull)
-21. Add offline support
+18. Create and run database schema ✓ (`supabase/schema.sql`)
+19. Implement auth flow (sign up/in/out) ✓
+20. Implement sync logic (push/pull) ✓
+21. Add offline support ✓
+
+**Supabase Setup:**
+1. Create project at https://supabase.com
+2. Run `supabase/schema.sql` in Supabase SQL editor
+3. Add credentials to `.env.local`
 
 ### Phase 7: Polish
-22. Loading states (skeletons)
-23. Toast notifications
-24. Animations (framer-motion optional)
-25. Responsive design
+22. Loading states (skeletons) - Native to shadcn/ui
+23. Toast notifications - Sonner configured ✓
+24. Animations - Tailwind animate.css ✓
+25. Responsive design - Mobile nav + sidebar ✓
 
 ---
 
@@ -336,7 +361,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 ### Install shadcn components
 ```bash
-npx shadcn@latest add button card dialog input label select switch toast skeleton avatar separator
+npx shadcn@latest add button card dialog input label select switch sonner skeleton avatar separator
 ```
 
 ### Run development server
@@ -353,13 +378,13 @@ bun build
 
 ## Success Criteria
 
-- [ ] User can track time in ≤1 click
-- [ ] Streak updates correctly every day
-- [ ] No data loss on refresh
-- [ ] App feels fast and distraction-free
-- [ ] Works offline with localStorage
-- [ ] Syncs to cloud when online
-- [ ] Cross-device access with Supabase auth
+- [x] User can track time in ≤1 click
+- [x] Streak updates correctly every day
+- [x] No data loss on refresh (localStorage)
+- [x] App feels fast and distraction-free
+- [x] Works offline with localStorage
+- [x] Syncs to cloud when online (Supabase)
+- [x] Cross-device access with Supabase auth
 
 ---
 
