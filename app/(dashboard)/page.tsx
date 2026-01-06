@@ -17,7 +17,7 @@ export default function HomePage() {
         <p className="text-zinc-400">Start tracking your time and build streaks</p>
       </div>
 
-      <div className="mb-8">
+      <div className="mb-8 flex flex-col items-center">
         <Timer />
       </div>
 
