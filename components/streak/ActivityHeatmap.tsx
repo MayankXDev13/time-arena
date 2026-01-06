@@ -31,11 +31,11 @@ interface YearData {
 }
 
 const colorLevels = [
-  { threshold: 0, className: 'bg-zinc-800' },
-  { threshold: 15, className: 'bg-orange-900/30' },
-  { threshold: 30, className: 'bg-orange-800/50' },
-  { threshold: 60, className: 'bg-orange-600/70' },
-  { threshold: 120, className: 'bg-orange-500' },
+  { threshold: 0, className: 'bg-zinc-700 hover:bg-zinc-600' },
+  { threshold: 5, className: 'bg-emerald-900/60 hover:bg-emerald-800/70' },
+  { threshold: 15, className: 'bg-emerald-700/70 hover:bg-emerald-600/80' },
+  { threshold: 30, className: 'bg-orange-600/80 hover:bg-orange-500/90' },
+  { threshold: 60, className: 'bg-orange-500 hover:bg-orange-400' },
 ];
 
 function getColorClass(minutes: number): string {
@@ -137,11 +137,12 @@ function HeatmapCell({ day, colorClass, isToday, onClick }: { day: DailyData; co
         <button
           onClick={onClick}
           className={cn(
-            'w-2 h-2 rounded-[1px] transition-all cursor-pointer hover:ring-1 hover:ring-white hover:ring-offset-0.5 hover:ring-offset-black',
+            'w-2.5 h-2.5 rounded-[2px] transition-all duration-200 cursor-pointer',
+            'hover:scale-125 hover:z-10 focus:outline-none focus:ring-2 focus:ring-orange-500/50',
             colorClass,
             isToday && 'ring-1 ring-white ring-offset-0.5 ring-offset-black'
           )}
-          style={{ width: '8px', height: '8px' }}
+          style={{ width: '10px', height: '10px' }}
         />
       </Tooltip.Trigger>
       <Tooltip.Portal>
@@ -272,8 +273,8 @@ export function ActivityHeatmap({ sessions, className }: ActivityHeatmapProps) {
               {dayLabels.map((label, i) => (
                 <div
                   key={i}
-                  className="h-2 text-[8px] text-zinc-600 flex items-center"
-                  style={{ height: '8px' }}
+                  className="h-2.5 text-[11px] text-zinc-400 flex items-center font-medium"
+                  style={{ height: '10px' }}
                 >
                   {i % 2 === 0 ? label : ''}
                 </div>
@@ -287,8 +288,8 @@ export function ActivityHeatmap({ sessions, className }: ActivityHeatmapProps) {
                       return (
                         <div
                           key={dayIndex}
-                          className="w-2 h-2"
-                          style={{ width: '8px', height: '8px' }}
+                          className="w-2.5 h-2.5"
+                          style={{ width: '10px', height: '10px' }}
                         />
                       );
                     }
@@ -303,7 +304,7 @@ export function ActivityHeatmap({ sessions, className }: ActivityHeatmapProps) {
                     );
                   })}
                   {weekIndex % 4 === 0 && week.monthLabel && (
-                    <div className="text-[8px] text-zinc-600 text-center pt-0.5">
+                    <div className="text-[12px] text-zinc-400 font-semibold text-center pt-1 leading-tight">
                       {week.monthLabel}
                     </div>
                   )}
