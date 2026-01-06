@@ -1,31 +1,72 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { useSessions } from './useSessions';
-import { useSettingsStore } from '@/stores/useSettingsStore';
-import type { Session } from '@/types';
-
-interface TimerState {
-  isRunning: boolean;
-  elapsed: number;
-  sessionId: string | null;
-}
+import { useTimerStore, TimerMode } from '@/stores/useTimerStore';
+import { showTimerNotification, getCompletedNotification, requestNotificationPermission } from '@/utils/notifications';
+import { useTimerSync } from './useTimerSync';
 
 export function useTimer() {
-  const [timer, setTimer] = useState<TimerState>({
-    isRunning: false,
-    elapsed: 0,
-    sessionId: null,
-  });
+  const {
+    isRunning,
+    elapsed,
+    actualElapsed,
+    sessionId,
+    lastStartTime,
+    mode,
+    workDuration,
+    breakDuration,
+    targetDuration,
+    isCompleted,
+    setTimer,
+  } = useTimerStore();
 
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const notifiedRef = useRef(false);
   const startTimeRef = useRef<number>(0);
   const { createSession, endSession } = useSessions();
-  const { getStreakThreshold } = useSettingsStore();
+  const { restoreFromSupabase } = useTimerSync();
+
+  useEffect(() => {
+    const restore = async () => {
+      const saved = await restoreFromSupabase();
+      if (saved && saved.elapsed_seconds !== undefined) {
+        setTimer({
+          isRunning: saved.is_running || false,
+          elapsed: saved.elapsed_seconds,
+          actualElapsed: saved.elapsed_seconds,
+          mode: saved.mode || 'work',
+          workDuration: Math.ceil((saved.work_duration_seconds || 1500) / 60),
+          breakDuration: Math.ceil((saved.break_duration_seconds || 300) / 60),
+          targetDuration: saved.mode === 'work'
+            ? (saved.work_duration_seconds || 1500)
+            : (saved.break_duration_seconds || 300),
+          isCompleted: saved.elapsed_seconds >= (saved.mode === 'work' ? (saved.work_duration_seconds || 1500) : (saved.break_duration_seconds || 300)),
+        });
+      }
+    };
+    restore();
+  }, [restoreFromSupabase, setTimer]);
+
+  const clearIntervalRef = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  const checkCompletion = useCallback((currentActualElapsed: number) => {
+    if (currentActualElapsed >= targetDuration && !notifiedRef.current) {
+      notifiedRef.current = true;
+      const notification = getCompletedNotification(mode);
+      showTimerNotification(notification.title, notification.body);
+    }
+  }, [mode, targetDuration]);
 
   const start = useCallback(async () => {
-    const threshold = getStreakThreshold();
-    const startTime = new Date();
+    clearIntervalRef();
+    notifiedRef.current = false;
 
-    const session = await createSession({
+    const startTime = new Date();
+    const newSession = await createSession({
       userId: '',
       start: startTime,
       endedAt: null,
@@ -33,79 +74,111 @@ export function useTimer() {
     });
 
     startTimeRef.current = Date.now();
-    setTimer({
-      isRunning: true,
-      elapsed: 0,
-      sessionId: session.id,
-    });
 
     intervalRef.current = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
-      setTimer((prev) => ({ ...prev, elapsed }));
-    }, 1000);
-  }, [createSession, getStreakThreshold]);
+      const currentActualElapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+      const remaining = Math.max(0, targetDuration - currentActualElapsed);
+      const completed = currentActualElapsed >= targetDuration;
+
+      checkCompletion(currentActualElapsed);
+      setTimer({
+        isRunning: true,
+        actualElapsed: currentActualElapsed,
+        elapsed: remaining,
+        sessionId: newSession.id,
+        lastStartTime: startTimeRef.current,
+        isCompleted: completed,
+      });
+
+      if (completed) {
+        clearIntervalRef();
+        setTimer({ isRunning: false });
+      }
+    }, 100);
+
+    requestNotificationPermission();
+  }, [createSession, setTimer, clearIntervalRef, checkCompletion, targetDuration]);
 
   const pause = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-    setTimer((prev) => ({ ...prev, isRunning: false }));
-  }, []);
+    clearIntervalRef();
+    setTimer({ isRunning: false, lastStartTime: null });
+  }, [setTimer, clearIntervalRef]);
 
   const resume = useCallback(() => {
-    if (!timer.isRunning && timer.sessionId) {
-      startTimeRef.current = Date.now() - timer.elapsed * 1000;
+    if (!isRunning && (sessionId || actualElapsed > 0)) {
+      notifiedRef.current = false;
+      startTimeRef.current = Date.now() - actualElapsed * 1000;
+
       intervalRef.current = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
-        setTimer((prev) => ({ ...prev, elapsed }));
-      }, 1000);
-      setTimer((prev) => ({ ...prev, isRunning: true }));
+        const currentActualElapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+        const remaining = Math.max(0, targetDuration - currentActualElapsed);
+        const completed = currentActualElapsed >= targetDuration;
+
+        checkCompletion(currentActualElapsed);
+        setTimer({
+          isRunning: true,
+          actualElapsed: currentActualElapsed,
+          elapsed: remaining,
+          lastStartTime: startTimeRef.current,
+          isCompleted: completed,
+        });
+
+        if (completed) {
+          clearIntervalRef();
+          setTimer({ isRunning: false });
+        }
+      }, 100);
+
+      requestNotificationPermission();
     }
-  }, [timer.isRunning, timer.sessionId, timer.elapsed]);
+  }, [isRunning, sessionId, actualElapsed, setTimer, checkCompletion, targetDuration]);
 
   const stop = useCallback(async () => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
+    clearIntervalRef();
+    notifiedRef.current = false;
 
     const endTime = new Date();
-    const duration = timer.elapsed;
+    const duration = actualElapsed;
 
-    if (timer.sessionId) {
-      await endSession(timer.sessionId, endTime, duration);
+    if (sessionId) {
+      await endSession(sessionId, endTime, duration);
     }
 
     setTimer({
       isRunning: false,
       elapsed: 0,
+      actualElapsed: 0,
       sessionId: null,
+      lastStartTime: null,
+      isCompleted: false,
     });
-  }, [timer.sessionId, timer.elapsed, endSession]);
+  }, [sessionId, actualElapsed, endSession, setTimer, clearIntervalRef]);
 
   const reset = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
+    clearIntervalRef();
+    notifiedRef.current = false;
     setTimer({
       isRunning: false,
       elapsed: 0,
+      actualElapsed: 0,
       sessionId: null,
+      lastStartTime: null,
+      isCompleted: false,
     });
-  }, []);
+  }, [setTimer, clearIntervalRef]);
 
   useEffect(() => {
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      clearIntervalRef();
     };
-  }, []);
+  }, [clearIntervalRef]);
 
   return {
-    ...timer,
+    isRunning,
+    elapsed,
+    actualElapsed,
+    sessionId,
+    isCompleted,
     start,
     pause,
     resume,

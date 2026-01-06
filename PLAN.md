@@ -396,3 +396,305 @@ bun build
 - Mobile app (Expo)
 - Analytics charts
 - Notifications
+
+---
+
+## Implementation Plan (v2.0 - Pending)
+
+### Issues to Fix
+
+#### Issue 1: Timer Not Working
+**Root cause**: The `useEffect` in `useTimer.ts` only runs when `isRunning` or `lastStartTime` changes, but doesn't handle the interval properly. The timer state updates but the UI doesn't reflect changes.
+
+** the timer logic -Fix**: Simplify move interval management entirely to the `start`/`pause`/`resume` functions without relying on `useEffect` for the interval.
+
+---
+
+### New Features (v2.0)
+
+#### Feature 1: Pomodoro Timer (Work/Break Modes)
+
+Add timer modes:
+- **Work mode**: Default configurable (25 min)
+- **Break mode**: Default configurable (5 min)
+- Auto-switch between modes when timer completes (wait for user confirmation)
+- Browser notification when timer completes
+
+**UI Changes**:
+- Add mode selector (Work/Break toggle)
+- Show remaining time with progress indicator
+- Settings page to configure durations
+
+**Database Schema Updates**:
+```sql
+ALTER TABLE user_settings ADD COLUMN work_duration_minutes INTEGER DEFAULT 25;
+ALTER TABLE user_settings ADD COLUMN break_duration_minutes INTEGER DEFAULT 5;
+ALTER TABLE user_settings ADD COLUMN auto_start_break BOOLEAN DEFAULT false;
+```
+
+**New Components**:
+| File | Purpose |
+|------|---------|
+| `components/timer/TimerModeSelector.tsx` | Work/Break toggle switch |
+| `components/timer/ProgressRing.tsx` | Circular progress indicator |
+
+---
+
+#### Feature 2: Supabase Authentication (Email + GitHub)
+
+**Auth Methods**:
+- Email/Password sign up and sign in
+- GitHub OAuth (via Supabase)
+
+**New Files**:
+| File | Purpose |
+|------|---------|
+| `hooks/useAuth.ts` | Auth state & methods (signUp, signIn, signOut, session) |
+| `components/auth/AuthForm.tsx` | Login/signup UI with toggle |
+| `components/auth/AuthProvider.tsx` | React context for auth state |
+| `app/(auth)/login/page.tsx` | Login page |
+| `app/(auth)/signup/page.tsx` | Signup page |
+| `middleware.ts` | Route protection |
+
+**Auth Flow**:
+```
+App Entry → Check Auth State
+                │
+        ┌───────┴───────┐
+        ▼               ▼
+    Signed In      Not Signed In
+        │               │
+        ▼               ▼
+    Dashboard    Landing + Auth Modal
+        │               │
+        └───────────────┤
+                      ▼
+            Anonymous Mode (localStorage)
+```
+
+**Note**: Routes remain accessible to anonymous users - auth is optional for cloud sync.
+
+---
+
+#### Feature 3: Cloud Sync for Timer State
+
+Save timer state to Supabase for cross-device sync and real-time updates.
+
+**New Database Table**:
+```sql
+CREATE TABLE timer_states (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  is_running BOOLEAN DEFAULT false,
+  elapsed_seconds INTEGER DEFAULT 0,
+  mode TEXT DEFAULT 'work',  -- 'work' or 'break'
+  work_duration_seconds INTEGER DEFAULT 1500,
+  break_duration_seconds INTEGER DEFAULT 300,
+  last_updated TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE POLICY "Users can CRUD own timer state" ON timer_states
+  FOR ALL USING (auth.uid() = user_id);
+
+CREATE UNIQUE INDEX idx_timer_states_user ON timer_states(user_id);
+```
+
+**Behavior**:
+- On timer start/pause/stop: save state to `timer_states` table
+- On page load: fetch state from `timer_states` and restore
+- Real-time updates via Supabase subscriptions (optional enhancement)
+
+**Hook Update**:
+- `hooks/useTimer.ts`: Add `syncTimerState()` function that saves to Supabase
+- `hooks/useTimer.ts`: Add `restoreTimerState()` function on mount
+
+---
+
+#### Feature 4: GitHub-Style Activity Heatmap
+
+Show daily activity as a configurable heatmap grid.
+
+**Component**: `components/streak/ActivityHeatmap.tsx`
+
+**Visual**:
+```
+□ ■ ■ □ □ ■ ■ ■ □
+■ ■ □ □ ■ ■ □ ■ □
+□ □ □ ■ ■ ■ □ □ □
+```
+
+- Each cell = one day (last 365 days configurable)
+- Color intensity = total minutes that day
+- Click cell to show day's sessions in modal
+- Tooltip with exact minutes on hover
+
+**Color Scale** (5 levels):
+| Level | Minutes | Color (Tailwind) |
+|-------|---------|------------------|
+| 0 | 0 min | `bg-zinc-800` |
+| 1 | 1-15 min | `bg-orange-900/30` |
+| 2 | 15-30 min | `bg-orange-800/50` |
+| 3 | 30-60 min | `bg-orange-600/70` |
+| 4 | 60+ min | `bg-orange-500` |
+
+**Configurable Periods**:
+- 30 days (default)
+- 60 days
+- 90 days
+- 120 days
+- 150 days
+- 180 days
+
+**New Files**:
+| File | Purpose |
+|------|---------|
+| `components/streak/ActivityHeatmap.tsx` | Main heatmap grid |
+| `components/streak/HeatmapCell.tsx` | Individual day cell |
+| `components/streak/HeatmapLegend.tsx` | Color scale legend |
+| `components/streak/PeriodSelector.tsx` | Dropdown to select period |
+
+**Data Aggregation**:
+```typescript
+function getDailyMinutes(sessions: Session[]): Record<string, number> {
+  // Group sessions by date, sum durations
+  return sessions.reduce((acc, session) => {
+    const date = formatLocalDate(new Date(session.start));
+    acc[date] = (acc[date] || 0) + session.duration;
+    return acc;
+  }, {});
+}
+```
+
+---
+
+### Implementation Order (v2.0)
+
+| Phase | Tasks | Status |
+|-------|-------|--------|
+| **1** | Fix timer not working (debug interval issue) | Pending |
+| **2** | Add Pomodoro mode selector + settings | Pending |
+| **3** | Implement Supabase auth (useAuth hook + login page) | Pending |
+| **4** | Add timer_states table + cloud sync | Pending |
+| **5** | Create ActivityHeatmap component + Dashboard integration | Pending |
+
+---
+
+### Database Schema (Complete v2.0)
+
+```sql
+-- Enable UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Profiles table
+CREATE TABLE profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email TEXT,
+  avatar_url TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Sessions table
+CREATE TABLE sessions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  start TIMESTAMPTZ NOT NULL,
+  ended_at TIMESTAMPTZ,
+  duration INTEGER NOT NULL,
+  mode TEXT DEFAULT 'work',  -- 'work' or 'break'
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_sessions_user_date ON sessions(user_id, start);
+CREATE INDEX idx_sessions_user_mode ON sessions(user_id, mode);
+
+-- User settings table
+CREATE TABLE user_settings (
+  user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  streak_threshold_minutes INTEGER DEFAULT 15,
+  work_duration_minutes INTEGER DEFAULT 25,
+  break_duration_minutes INTEGER DEFAULT 5,
+  auto_start_break BOOLEAN DEFAULT false,
+  notifications_enabled BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Streaks table
+CREATE TABLE streaks (
+  user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  current_streak INTEGER DEFAULT 0,
+  longest_streak INTEGER DEFAULT 0,
+  last_qualified_date DATE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Timer states table (for cloud sync)
+CREATE TABLE timer_states (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  is_running BOOLEAN DEFAULT false,
+  elapsed_seconds INTEGER DEFAULT 0,
+  mode TEXT DEFAULT 'work',
+  work_duration_seconds INTEGER DEFAULT 1500,
+  break_duration_seconds INTEGER DEFAULT 300,
+  last_updated TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX idx_timer_states_user ON timer_states(user_id);
+
+-- RLS Policies
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE streaks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE timer_states ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can CRUD own profile" ON profiles
+  FOR ALL USING (auth.uid() = id);
+
+CREATE POLICY "Users can CRUD own sessions" ON sessions
+  FOR ALL USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can CRUD own settings" ON user_settings
+  FOR ALL USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can CRUD own streak" ON streaks
+  FOR ALL USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can CRUD own timer state" ON timer_states
+  FOR ALL USING (auth.uid() = user_id);
+
+-- Trigger to create profile/settings/streak on signup
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, email)
+  VALUES (NEW.id, NEW.email);
+  INSERT INTO public.user_settings (user_id, streak_threshold_minutes, work_duration_minutes, break_duration_minutes)
+  VALUES (NEW.id, 15, 25, 5);
+  INSERT INTO public.streaks (user_id, current_streak, longest_streak, last_qualified_date)
+  VALUES (NEW.id, 0, 0, NULL);
+  INSERT INTO public.timer_states (user_id, is_running, elapsed_seconds, mode, work_duration_seconds, break_duration_seconds)
+  VALUES (NEW.id, false, 0, 'work', 1500, 300);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+```
+
+---
+
+### User Preferences (Confirmed)
+
+| Setting | Value |
+|---------|-------|
+| Auth methods | Email/Password + GitHub OAuth |
+| Timer sounds | Browser notifications only |
+| Break auto-start | Wait for user confirmation |
+| Heatmap default | 90 days |
+| Heatmap periods | 30, 60, 90, 120, 150, 180 days |

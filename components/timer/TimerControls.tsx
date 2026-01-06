@@ -1,14 +1,34 @@
-import { useTimer } from '@/hooks/useTimer';
 import { Button } from '@/components/ui/button';
 import { PiPlayFill, PiPauseFill, PiStopFill, PiArrowCounterClockwiseFill } from 'react-icons/pi';
+import { cn } from '@/lib/utils';
 
-export function TimerControls() {
-  const { isRunning, start, pause, resume, stop, reset, elapsed } = useTimer();
+interface TimerControlsProps {
+  isRunning: boolean;
+  elapsed: number;
+  isCompleted: boolean;
+  start: () => Promise<void>;
+  pause: () => void;
+  resume: () => void;
+  stop: () => Promise<void>;
+  reset: () => void;
+}
 
+export function TimerControls({
+  isRunning,
+  elapsed,
+  isCompleted,
+  start,
+  pause,
+  resume,
+  stop,
+  reset,
+}: TimerControlsProps) {
   const handleStartPause = () => {
-    if (isRunning) {
+    if (isCompleted) {
+      reset();
+    } else if (isRunning) {
       pause();
-    } else if (elapsed === 0) {
+    } else if (elapsed === 0 || isCompleted) {
       start();
     } else {
       resume();
@@ -19,7 +39,7 @@ export function TimerControls() {
     <div className="flex items-center justify-center gap-4">
       <Button
         onClick={stop}
-        disabled={!isRunning && elapsed === 0}
+        disabled={!isRunning && elapsed === 0 && !isCompleted}
         variant="outline"
         size="lg"
         className="border-zinc-700 hover:bg-zinc-800 hover:text-orange-500 transition-colors"
@@ -30,9 +50,18 @@ export function TimerControls() {
       <Button
         onClick={handleStartPause}
         size="lg"
-        className="w-20 h-20 rounded-full bg-orange-500 hover:bg-orange-600 text-white text-xl font-semibold transition-all hover:scale-105 active:scale-95 shadow-lg shadow-orange-500/25"
+        className={cn(
+          'w-20 h-20 rounded-full text-xl font-semibold transition-all hover:scale-105 active:scale-95 shadow-lg',
+          isCompleted
+            ? 'bg-green-500 hover:bg-green-600 text-white'
+            : isRunning
+            ? 'bg-orange-500 hover:bg-orange-600 text-white'
+            : 'bg-orange-500 hover:bg-orange-600 text-white'
+        )}
       >
-        {isRunning ? (
+        {isCompleted ? (
+          <PiArrowCounterClockwiseFill className="w-8 h-8" />
+        ) : isRunning ? (
           <PiPauseFill className="w-8 h-8" />
         ) : (
           <PiPlayFill className="w-8 h-8 ml-1" />
@@ -41,7 +70,7 @@ export function TimerControls() {
 
       <Button
         onClick={reset}
-        disabled={!isRunning && elapsed === 0}
+        disabled={!isRunning && elapsed === 0 && !isCompleted}
         variant="outline"
         size="lg"
         className="border-zinc-700 hover:bg-zinc-800 hover:text-orange-500 transition-colors"

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSessionStore } from '@/stores/useSessionStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { calculateStreak, hasQualifiedToday } from '@/utils/streak';
@@ -22,18 +22,26 @@ export function useStreak() {
   });
 
   const sessions = useSessionStore((state) => state.sessions);
-  const { settings, updateSettings } = useSettingsStore();
+  const { settings } = useSettingsStore();
+
+  const currentStreakRef = useRef(0);
+  const longestStreakRef = useRef(0);
+  const lastQualifiedDateRef = useRef<string | null>(null);
 
   const calculate = useCallback(() => {
     const threshold = settings?.streakThresholdMinutes ?? 15;
 
     const result = calculateStreak(
       sessions,
-      streakState.currentStreak,
-      streakState.longestStreak,
-      streakState.lastQualifiedDate,
+      currentStreakRef.current,
+      longestStreakRef.current,
+      lastQualifiedDateRef.current,
       threshold
     );
+
+    currentStreakRef.current = result.currentStreak;
+    longestStreakRef.current = result.longestStreak;
+    lastQualifiedDateRef.current = result.lastQualifiedDate;
 
     const qualified = hasQualifiedToday(sessions, threshold);
 
@@ -44,7 +52,7 @@ export function useStreak() {
       qualifiedToday: qualified,
       loading: false,
     });
-  }, [sessions, settings?.streakThresholdMinutes, streakState]);
+  }, [sessions, settings?.streakThresholdMinutes]);
 
   useEffect(() => {
     calculate();
@@ -52,12 +60,18 @@ export function useStreak() {
 
   const updateStreak = useCallback(
     (streak: Partial<Streak>) => {
-      setStreakState((prev) => ({
-        ...prev,
-        currentStreak: streak.currentStreak ?? prev.currentStreak,
-        longestStreak: streak.longestStreak ?? prev.longestStreak,
-        lastQualifiedDate: streak.lastQualifiedDate ?? prev.lastQualifiedDate,
-      }));
+      setStreakState((prev) => {
+        const newStreak = {
+          ...prev,
+          currentStreak: streak.currentStreak ?? prev.currentStreak,
+          longestStreak: streak.longestStreak ?? prev.longestStreak,
+          lastQualifiedDate: streak.lastQualifiedDate ?? prev.lastQualifiedDate,
+        };
+        currentStreakRef.current = newStreak.currentStreak;
+        longestStreakRef.current = newStreak.longestStreak;
+        lastQualifiedDateRef.current = newStreak.lastQualifiedDate;
+        return newStreak;
+      });
     },
     []
   );

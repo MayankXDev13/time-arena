@@ -3,8 +3,13 @@
 import { Timer } from '@/components/timer/Timer';
 import { StreakTile } from '@/components/streak/StreakTile';
 import { TodaySummary } from '@/components/sessions/TodaySummary';
+import { ActivityHeatmap } from '@/components/streak/ActivityHeatmap';
+import { useSessionStore } from '@/stores/useSessionStore';
+import { Card, CardContent } from '@/components/ui/card';
 
 export default function HomePage() {
+  const { sessions } = useSessionStore();
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
       <div className="mb-8">
@@ -15,6 +20,12 @@ export default function HomePage() {
       <div className="mb-8">
         <Timer />
       </div>
+
+      <Card className="mb-4 bg-zinc-900 border-zinc-800">
+        <CardContent className="pt-6">
+          <ActivityHeatmap sessions={sessions} />
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <StreakTile />
