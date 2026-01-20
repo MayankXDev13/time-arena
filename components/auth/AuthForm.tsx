@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useRouter } from 'next/navigation';
-import { PiGithubLogo, PiSpinner } from 'react-icons/pi';
+import { PiGithubLogo, PiGoogleLogo, PiSpinner } from 'react-icons/pi';
 import { cn } from '@/lib/utils';
 
 interface AuthFormProps {
@@ -16,8 +16,9 @@ interface AuthFormProps {
 }
 
 export function AuthForm({ mode }: AuthFormProps) {
-  const { signIn, signUp, signInWithGitHub, loading } = useAuth();
+  const { signIn, signUp, signInWithGitHub, signInWithGoogle, loading } = useAuth();
   const router = useRouter();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -40,11 +41,15 @@ export function AuthForm({ mode }: AuthFormProps) {
           router.refresh();
         }
       } else {
-        const { error } = await signUp(email, password);
+        const { error } = await signUp(name, email, password);
         if (error) {
           setError(error.message);
         } else {
-          setSuccessMessage('Check your email for a confirmation link!');
+          setSuccessMessage('Account created successfully! Redirecting...');
+          setTimeout(() => {
+            router.push('/');
+            router.refresh();
+          }, 1500);
         }
       }
     } catch (err) {
@@ -57,6 +62,14 @@ export function AuthForm({ mode }: AuthFormProps) {
   const handleGitHubSignIn = async () => {
     setError(null);
     const { error } = await signInWithGitHub();
+    if (error) {
+      setError(error.message);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError(null);
+    const { error } = await signInWithGoogle();
     if (error) {
       setError(error.message);
     }
@@ -85,6 +98,16 @@ export function AuthForm({ mode }: AuthFormProps) {
           Continue with GitHub
         </Button>
 
+        <Button
+          variant="outline"
+          className="w-full border-zinc-700 hover:bg-zinc-800"
+          onClick={handleGoogleSignIn}
+          disabled={loading || isSubmitting}
+        >
+          <PiGoogleLogo className="w-5 h-5 mr-2" />
+          Continue with Google
+        </Button>
+
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
             <Separator className="w-full bg-zinc-800" />
@@ -95,6 +118,21 @@ export function AuthForm({ mode }: AuthFormProps) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {mode === 'signup' && (
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-zinc-300">Name</Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="Your name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
+              />
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="email" className="text-zinc-300">Email</Label>
             <Input

@@ -26,25 +26,8 @@ export function useTimer() {
   const { restoreFromSupabase } = useTimerSync();
 
   useEffect(() => {
-    const restore = async () => {
-      const saved = await restoreFromSupabase();
-      if (saved && saved.elapsed_seconds !== undefined) {
-        setTimer({
-          isRunning: saved.is_running || false,
-          elapsed: saved.elapsed_seconds,
-          actualElapsed: saved.elapsed_seconds,
-          mode: saved.mode || 'work',
-          workDuration: Math.ceil((saved.work_duration_seconds || 1500) / 60),
-          breakDuration: Math.ceil((saved.break_duration_seconds || 300) / 60),
-          targetDuration: saved.mode === 'work'
-            ? (saved.work_duration_seconds || 1500)
-            : (saved.break_duration_seconds || 300),
-          isCompleted: saved.elapsed_seconds >= (saved.mode === 'work' ? (saved.work_duration_seconds || 1500) : (saved.break_duration_seconds || 300)),
-        });
-      }
-    };
-    restore();
-  }, [restoreFromSupabase, setTimer]);
+    restoreFromSupabase();
+  }, [restoreFromSupabase]);
 
   const clearIntervalRef = useCallback(() => {
     if (intervalRef.current) {
@@ -77,18 +60,17 @@ export function useTimer() {
 
     intervalRef.current = setInterval(() => {
       const currentActualElapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
-      const remaining = Math.max(0, targetDuration - currentActualElapsed);
       const completed = currentActualElapsed >= targetDuration;
 
       checkCompletion(currentActualElapsed);
-      setTimer({
-        isRunning: true,
-        actualElapsed: currentActualElapsed,
-        elapsed: remaining,
-        sessionId: newSession.id,
-        lastStartTime: startTimeRef.current,
-        isCompleted: completed,
-      });
+        setTimer({
+          isRunning: true,
+          actualElapsed: currentActualElapsed,
+          elapsed: currentActualElapsed,
+          sessionId: newSession.id,
+          lastStartTime: startTimeRef.current,
+          isCompleted: completed,
+        });
 
       if (completed) {
         clearIntervalRef();
@@ -111,14 +93,13 @@ export function useTimer() {
 
       intervalRef.current = setInterval(() => {
         const currentActualElapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
-        const remaining = Math.max(0, targetDuration - currentActualElapsed);
         const completed = currentActualElapsed >= targetDuration;
 
         checkCompletion(currentActualElapsed);
         setTimer({
           isRunning: true,
           actualElapsed: currentActualElapsed,
-          elapsed: remaining,
+          elapsed: currentActualElapsed,
           lastStartTime: startTimeRef.current,
           isCompleted: completed,
         });

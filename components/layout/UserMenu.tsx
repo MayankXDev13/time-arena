@@ -10,20 +10,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PiGithubLogo, PiSignOut, PiUser } from 'react-icons/pi';
+import { PiGithubLogo, PiGoogleLogo, PiSignOut, PiUser } from 'react-icons/pi';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 export function UserMenu() {
-  const { user, signOut, signInWithGitHub, loading } = useAuth();
+  const { user, signOut, signInWithGitHub, signInWithGoogle, loading } = useAuth();
   const router = useRouter();
-
-  const handleSignIn = async () => {
-    const { error } = await signInWithGitHub();
-    if (!error) {
-      router.refresh();
-    }
-  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -43,15 +36,33 @@ export function UserMenu() {
 
   if (!user) {
     return (
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleSignIn}
-        className="text-zinc-400 hover:text-white"
-      >
-        <PiGithubLogo className="w-4 h-4 mr-2" />
-        Sign in
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-zinc-400 hover:text-white"
+          >
+            Sign in
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-48 bg-zinc-900 border-zinc-800" align="end">
+          <DropdownMenuItem
+            onClick={signInWithGitHub}
+            className="text-zinc-400 hover:text-white hover:bg-zinc-800 cursor-pointer"
+          >
+            <PiGithubLogo className="mr-2 h-4 w-4" />
+            GitHub
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={signInWithGoogle}
+            className="text-zinc-400 hover:text-white hover:bg-zinc-800 cursor-pointer"
+          >
+            <PiGoogleLogo className="mr-2 h-4 w-4" />
+            Google
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     );
   }
 

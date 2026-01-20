@@ -21,8 +21,7 @@ export function TimerDisplay({
   breakDuration,
 }: TimerDisplayProps) {
   const targetDuration = mode === 'work' ? workDuration * 60 : breakDuration * 60;
-  const progress = targetDuration > 0 ? Math.max(0, elapsed / targetDuration) : 0;
-  const remaining = Math.max(0, targetDuration - elapsed);
+  const progress = targetDuration > 0 ? Math.min(1, elapsed / targetDuration) : 0;
 
   return (
     <div className="relative flex flex-col items-center">
@@ -44,7 +43,7 @@ export function TimerDisplay({
               isCompleted && 'text-orange-500'
             )}
           >
-            {isCompleted ? '00:00' : formatTime(remaining)}
+            {isCompleted ? formatTime(targetDuration) : formatTime(elapsed)}
           </div>
         </div>
       </CircularProgress>
@@ -65,7 +64,7 @@ export function TimerDisplay({
             <span className="text-orange-500 font-medium">Session Complete!</span>
           ) : (
             <>
-              {mode === 'work' ? 'Focus time' : 'Break time'} • {Math.ceil(remaining / 60)} min remaining
+              {mode === 'work' ? 'Focus time' : 'Break time'} • {Math.floor(elapsed / 60)} min elapsed
             </>
           )}
         </div>

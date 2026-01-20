@@ -1,105 +1,86 @@
-import { useEffect, useState, useCallback } from 'react';
-import { getSupabaseClient } from '@/lib/supabase/client';
-import type { User, Session } from '@supabase/supabase-js';
+import { authClient } from "@/lib/auth-client";
 
 interface AuthState {
-  user: User | null;
-  session: Session | null;
+  user: any | null;
+  session: any | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string) => Promise<{ error: Error | null; needsConfirmation?: boolean }>;
+  signUp: (name: string, email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithGitHub: () => Promise<{ error: Error | null }>;
+  signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
 export function useAuth(): AuthState {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: session, isPending: loading } = authClient.useSession();
 
-  useEffect(() => {
-    const supabase = getSupabaseClient();
-    if (!supabase) {
-      setLoading(false);
-      return;
-    }
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session ?? null);
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const signIn = useCallback(
-    async (email: string, password: string) => {
-      const supabase = getSupabaseClient();
-      if (!supabase) {
-        return { error: new Error('Supabase not configured') };
-      }
-      const { error } = await supabase.auth.signInWithPassword({
+  const signInWithEmail = async (email: string, password: string) => {
+    try {
+      const result = await authClient.signIn.email({
         email,
         password,
       });
-      return { error: error ? new Error(error.message) : null };
-    },
-    []
-  );
-
-  const signUp = useCallback(
-    async (email: string, password: string) => {
-      const supabase = getSupabaseClient();
-      if (!supabase) {
-        return { error: new Error('Supabase not configured'), needsConfirmation: false };
+      if (result.error) {
+        return { error: new Error(result.error.message) };
       }
-      const { error } = await supabase.auth.signUp({
+      return { error: null };
+    } catch (err) {
+      return { error: err as Error };
+    }
+  };
+
+  const signUpWithEmail = async (name: string, email: string, password: string) => {
+    try {
+      const result = await authClient.signUp.email({
         email,
         password,
+        name,
       });
-      return {
-        error: error ? new Error(error.message) : null,
-        needsConfirmation: error?.message?.includes('email') ?? false,
-      };
-    },
-    []
-  );
-
-  const signInWithGitHub = useCallback(async () => {
-    const supabase = getSupabaseClient();
-    if (!supabase) {
-      return { error: new Error('Supabase not configured') };
+      if (result.error) {
+        return { error: new Error(result.error.message) };
+      }
+      return { error: null };
+    } catch (err) {
+      return { error: err as Error };
     }
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'github',
-      options: {
-        redirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`,
-      },
-    });
-    return { error: error ? new Error(error.message) : null };
-  }, []);
+  };
 
-  const signOut = useCallback(async () => {
-    const supabase = getSupabaseClient();
-    if (!supabase) return;
-    await supabase.auth.signOut();
-  }, []);
+  const signInWithGitHub = async () => {
+    try {
+      await authClient.signIn.social({
+        provider: "github",
+        callbackURL: "/",
+      });
+      return { error: null };
+    } catch (err) {
+      return { error: err as Error };
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    try {
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/",
+      });
+      return { error: null };
+    } catch (err) {
+      return { error: err as Error };
+    }
+  };
+
+  const handleSignOut = async () => {
+    await authClient.signOut();
+  };
 
   return {
-    user,
-    session,
+    user: session?.user ?? null,
+    session: session ?? null,
     loading,
-    signIn,
-    signUp,
+    signIn: signInWithEmail,
+    signUp: signUpWithEmail,
     signInWithGitHub,
-    signOut,
+    signInWithGoogle,
+    signOut: handleSignOut,
   };
 }
