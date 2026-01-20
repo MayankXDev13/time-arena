@@ -10,5 +10,5 @@ export const {
   fetchAuthAction,
 } = convexBetterAuthNextJs({
   convexUrl: process.env.NEXT_PUBLIC_CONVEX_URL!,
-  convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
+  convexSiteUrl: process.env.SITE_URL!,
 });
