@@ -26,6 +26,11 @@ export function Timer() {
         workDuration={workDuration}
         breakDuration={breakDuration}
       />
+      <CategoryDropdown
+        selectedCategoryId={selectedCategoryId}
+        onSelect={setSelectedCategoryId}
+        className="w-64"
+      />
       <TimerControls
         isRunning={isRunning}
         elapsed={elapsed}
@@ -36,13 +41,6 @@ export function Timer() {
         stop={handleStop}
         reset={reset}
       />
-      {isRunning && (
-        <CategoryDropdown
-          selectedCategoryId={selectedCategoryId}
-          onSelect={setSelectedCategoryId}
-          className="w-64"
-        />
-      )}
     </div>
   );
 }
