@@ -7,7 +7,6 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
-      <Header />
       <main className="md:ml-64 pt-16 pb-16 md:pb-0">
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-md mx-auto">

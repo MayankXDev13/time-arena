@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 
 export const getRecent = query({
-  args: { userId: v.id("users"), limit: v.number() },
+  args: { userId: v.string(), limit: v.number() },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("sessions")
@@ -13,7 +13,7 @@ export const getRecent = query({
 });
 
 export const getStats = query({
-  args: { userId: v.id("users") },
+  args: { userId: v.string() },
   handler: async (ctx, args) => {
     const sessions = await ctx.db
       .query("sessions")
@@ -28,28 +28,30 @@ export const getStats = query({
     let weeklyMinutes = 0;
     let currentStreak = 0;
 
-    const workSessions = sessions.filter(s => s.mode === "work");
+    const workSessions = sessions.filter((s) => s.mode === "work");
 
-    
-    workSessions.forEach(session => {
+    workSessions.forEach((session) => {
       const sessionTime = session.start;
+
       if (sessionTime >= today) {
         todayMinutes += Math.floor(session.duration / 60);
       }
+
       if (sessionTime >= weekAgo) {
         weeklyMinutes += Math.floor(session.duration / 60);
       }
     });
 
-    
     const uniqueDays = new Set(
-      workSessions.map(s => new Date(s.start).toDateString())
+      workSessions.map((s) => new Date(s.start).toDateString())
     );
+
     const sortedDays = Array.from(uniqueDays).sort().reverse();
 
     for (let i = 0; i < sortedDays.length; i++) {
       const expectedDate = new Date();
       expectedDate.setDate(expectedDate.getDate() - i);
+
       if (sortedDays[i] === expectedDate.toDateString()) {
         currentStreak++;
       } else {
@@ -67,7 +69,7 @@ export const getStats = query({
 
 export const create = mutation({
   args: {
-    userId: v.id("users"),
+    userId: v.string(),
     categoryId: v.optional(v.id("categories")),
     start: v.number(),
     duration: v.number(),

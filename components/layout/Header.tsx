@@ -15,7 +15,7 @@ export function Header() {
   };
 
   return (
-    <header className="h-16 bg-background border-b border-border flex items-center justify-between px-6">
+    <header className="h-16 bg-background border-b border-border flex items-center justify-between px-6 fixed top-0 left-0 md:left-64 right-0 z-30">
       {/* Logo */}
       <Link href="/" className="text-xl font-bold text-foreground">
         Time Arena
