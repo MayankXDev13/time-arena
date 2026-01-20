@@ -18,6 +18,7 @@ export interface TimerStore {
     isCompleted: boolean;
 
     taskName: string;
+    selectedCategoryId: string | undefined;
 
     setTimer: (state: Partial<TimerStore>) => void;
     reset: () => void;
@@ -25,6 +26,7 @@ export interface TimerStore {
     setMode: (mode: TimerMode) => void;
     setWorkDuration: (minutes: number) => void;
     setBreakDuration: (minutes: number) => void;
+    setSelectedCategoryId: (categoryId: string | undefined) => void;
 
     startTimer: (taskName: string) => void;
     stopTimer: () => void;
@@ -47,6 +49,7 @@ export const useTimerStore = create<TimerStore>()(
             isCompleted: false,
 
             taskName: "",
+            selectedCategoryId: undefined,
 
             setTimer: (state) => set((prev) => ({ ...prev, ...state })),
 
@@ -59,6 +62,7 @@ export const useTimerStore = create<TimerStore>()(
                     lastStartTime: null,
                     isCompleted: false,
                     taskName: "",
+                    selectedCategoryId: undefined,
                 }),
 
             setMode: (mode) =>
@@ -82,6 +86,9 @@ export const useTimerStore = create<TimerStore>()(
                     breakDuration,
                     targetDuration: state.mode === "break" ? breakDuration * 60 : state.targetDuration,
                 })),
+
+            setSelectedCategoryId: (selectedCategoryId) =>
+                set({ selectedCategoryId }),
 
 
             startTimer: (taskName) => {
@@ -117,3 +124,4 @@ export const useTimerStore = create<TimerStore>()(
         }
     )
 );
+
