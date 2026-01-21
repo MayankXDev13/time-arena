@@ -4,12 +4,14 @@ import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/useAuth";
+import { useSidebarStore } from "@/stores/useSidebarStore";
 import { Button } from "@/components/ui/button";
 import { CategoryDropdown } from "@/components/CategoryDropdown";
 import { Edit2, Save, X, Trash2 } from "lucide-react";
 
 export default function StatsPage() {
   const { user } = useAuth();
+  const { isOpen } = useSidebarStore();
   const sessions = useQuery(api.sessions.getRecent, user?.id ? { userId: user.id as any, limit: 50 } : "skip");
   const categories = useQuery(api.categories.list, user?.id ? { userId: user.id as any } : "skip");
   const updateSession = useMutation(api.sessions.update);
@@ -51,11 +53,12 @@ export default function StatsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className={`min-h-screen bg-background transition-all duration-300 ${
+      isOpen ? "md:pl-64" : "md:pl-0"
+    }`}>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <h1 className="text-2xl font-bold text-foreground mb-8">Statistics</h1>
 
-       
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <div className="bg-card p-6 rounded-lg border border-border">
             <h3 className="text-lg font-semibold text-card-foreground mb-2">Today's Focus</h3>

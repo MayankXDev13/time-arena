@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/useAuth";
+import { useSidebarStore } from "@/stores/useSidebarStore";
 import { Button } from "@/components/ui/button";
 import { COLOR_OPTIONS } from "@/components/CategoryDropdown";
 import { Plus, Trash2, Edit2, Check, X } from "lucide-react";
 
 export default function CategoriesPage() {
   const { user } = useAuth();
+  const { isOpen } = useSidebarStore();
   const categories = useQuery(api.categories.list, user?.id ? { userId: user.id as any } : "skip");
   const createCategory = useMutation(api.categories.create);
   const updateCategory = useMutation(api.categories.update);
@@ -91,7 +93,9 @@ export default function CategoriesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className={`min-h-screen bg-background transition-all duration-300 ${
+      isOpen ? "md:pl-64" : "md:pl-0"
+    }`}>
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         <h1 className="text-2xl font-bold text-foreground mb-8">Categories</h1>
 
@@ -123,7 +127,6 @@ export default function CategoriesPage() {
           </div>
         </div>
 
-        {/* Categories List */}
         <div className="bg-card p-6 rounded-lg border border-border">
           <h2 className="text-lg font-semibold text-card-foreground mb-4">Your Categories</h2>
           <div className="space-y-3">
