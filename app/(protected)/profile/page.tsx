@@ -1,8 +1,14 @@
 "use client";
 
+import { useSidebarStore } from "@/stores/useSidebarStore";
+
 export default function ProfilePage() {
+  const { isOpen } = useSidebarStore();
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className={`min-h-screen bg-background transition-all duration-300 ${
+      isOpen ? "md:pl-64" : "md:pl-0"
+    }`}>
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         <h1 className="text-2xl font-bold text-foreground mb-8">Profile</h1>
 

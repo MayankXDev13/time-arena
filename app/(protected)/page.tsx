@@ -1,20 +1,16 @@
-import { Sidebar } from "@/components/layout/Sidebar";
-import { Header } from "@/components/layout/Header";
-import { MobileNav } from "@/components/layout/MobileNav";
+"use client";
+
 import { Timer } from "@/components/timer/Timer";
+import { useSidebarStore } from "@/stores/useSidebarStore";
 
 export default function Home() {
+  const { isOpen } = useSidebarStore();
+
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar />
-      <main className="md:ml-64 pt-16 pb-16 md:pb-0">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-md mx-auto">
-            <Timer />
-          </div>
-        </div>
-      </main>
-      <MobileNav />
+    <div className={`h-screen flex items-center justify-center overflow-hidden transition-all duration-300 ${
+      isOpen ? "md:pl-64" : "md:pl-0"
+    }`}>
+      <Timer />
     </div>
   );
 }
