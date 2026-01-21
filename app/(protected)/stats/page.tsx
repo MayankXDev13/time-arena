@@ -8,6 +8,7 @@ import { useSidebarStore } from "@/stores/useSidebarStore";
 import { Button } from "@/components/ui/button";
 import { CategoryDropdown } from "@/components/CategoryDropdown";
 import { Edit2, Save, X, Trash2 } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 export default function StatsPage() {
   const { user } = useAuth();
@@ -73,18 +74,57 @@ export default function StatsPage() {
 
   const hasActiveFilters = selectedCategoryId !== undefined || selectedMode !== "all";
 
-  const maxDailyMinutes = Math.max(...(stats?.dailyMinutes?.map((d: any) => d.minutes) || [1]));
+  const activeDays = stats?.dailyMinutes?.filter((day: any) => day.minutes > 0) || [];
+  const maxMinutes = Math.max(...(stats?.dailyMinutes?.map((d: any) => d.minutes) || [1]));
+
+  function calculateYAxisMax(max: number): number {
+    if (max <= 10) return 10;
+    if (max <= 15) return 15;
+    if (max <= 30) return 30;
+    if (max <= 45) return 45;
+    if (max <= 60) return 60;
+    if (max <= 90) return 90;
+    if (max <= 120) return 120;
+    return Math.ceil(max / 30) * 30;
+  }
+
+  function getYTicks(max: number): number[] {
+    const step = max / 3;
+    return [0, Math.round(step), Math.round(step * 2), max];
+  }
+
+  const chartData = useMemo(() => {
+    if (!stats?.dailyMinutes) return [];
+    const today = new Date().toISOString().split('T')[0];
+    return stats.dailyMinutes.map((day: any) => ({
+      ...day,
+      dayName: new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' }),
+      formattedDate: new Date(day.date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }),
+      isToday: day.date === today,
+    }));
+  }, [stats]);
+
+  const yAxisMax = useMemo(() => calculateYAxisMax(maxMinutes), [maxMinutes]);
+
+  function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: { formattedDate: string; minutes: number } }> }) {
+    if (!active || !payload?.length) return null;
+    const data = payload[0].payload;
+    return (
+      <div className="bg-popover/95 backdrop-blur-sm border border-border/60 rounded-lg shadow-xl px-3 py-2">
+        <p className="text-xs text-muted-foreground">{data.formattedDate}</p>
+        <p className="text-base font-semibold text-foreground">{data.minutes} min</p>
+      </div>
+    );
+  }
 
   return (
-    <div className={`min-h-screen bg-background transition-all duration-300 ${
-      isOpen ? "md:pl-64" : "md:pl-0"
-    }`}>
+    <div className={`min-h-screen bg-background transition-all duration-300 ${isOpen ? "md:pl-64" : "md:pl-0"}`}>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <h1 className="text-2xl font-bold text-foreground mb-8">Statistics</h1>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-card p-6 rounded-lg border border-border">
-            <h3 className="text-sm font-medium text-muted-foreground mb-1">Today's Focus</h3>
+            <h3 className="text-sm font-medium text-muted-foreground mb-1">Today&apos;s Focus</h3>
             <p className="text-2xl font-bold text-primary">{stats?.todayMinutes || 0}m</p>
           </div>
           <div className="bg-card p-6 rounded-lg border border-border">
@@ -102,27 +142,63 @@ export default function StatsPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <div className="bg-card p-6 rounded-lg border border-border">
+          <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl shadow-sm p-6">
             <h3 className="text-lg font-semibold text-card-foreground mb-4">Last 7 Days</h3>
-            <div className="space-y-3">
-              {stats?.dailyMinutes?.map((day: any) => {
-                const percentage = maxDailyMinutes > 0 ? (day.minutes / maxDailyMinutes) * 100 : 0;
-                const date = new Date(day.date);
-                const dayName = date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-                return (
-                  <div key={day.date} className="flex items-center gap-3">
-                    <span className="text-sm text-muted-foreground w-24">{dayName}</span>
-                    <div className="flex-1 h-8 bg-accent rounded-md overflow-hidden">
-                      <div
-                        className="h-full bg-primary rounded-md transition-all duration-300"
-                        style={{ width: `${percentage}%` }}
-                      />
-                    </div>
-                    <span className="text-sm font-medium w-16 text-right">{day.minutes}m</span>
-                  </div>
-                );
-              })}
-            </div>
+            {stats?.dailyMinutes && stats.dailyMinutes.length > 0 ? (
+              <div className="h-[260px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData} margin={{ top: 20, right: 0, left: -30, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="roseGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#fb7185" />
+                        <stop offset="100%" stopColor="#e11d48" />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
+                    <YAxis
+                      domain={[0, yAxisMax]}
+                      ticks={getYTicks(yAxisMax)}
+                      tickFormatter={(v) => `${v}m`}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
+                      width={36}
+                    />
+                    <XAxis
+                      dataKey="dayName"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
+                      dy={10}
+                    />
+                    <Tooltip
+                      cursor={{ fill: 'var(--muted)', opacity: 0.2 }}
+                      content={<CustomTooltip />}
+                      position={{ y: -15 }}
+                      isAnimationActive={true}
+                      animationDuration={200}
+                    />
+                    <Bar dataKey="minutes" barSize={28} radius={[6, 6, 0, 0]} fill="url(#roseGradient)">
+                      {chartData.map((entry, index) => (
+                        <Cell
+                          key={entry.date}
+                          fill={entry.minutes === 0 ? 'url(#roseGradient)' : 'url(#roseGradient)'}
+                          style={{
+                            opacity: entry.minutes === 0 ? 0.15 : 1,
+                            filter: entry.isToday ? 'drop-shadow(0 0 12px rgba(244, 63, 94, 0.5))' : 'none',
+                            animationDelay: `${index * 60}ms`,
+                          }}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-[260px] text-muted-foreground text-sm">
+                No focus time recorded in the last 7 days
+              </div>
+            )}
           </div>
         </div>
 
@@ -195,9 +271,7 @@ export default function StatsPage() {
                       <span className="text-sm text-muted-foreground">
                         {formatDate(session.start)}
                       </span>
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        session.mode === "work" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
-                      }`}>
+                      <span className={`px-2 py-1 rounded text-xs ${session.mode === "work" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
                         {session.mode}
                       </span>
                       <span className="text-sm font-medium">{formatDuration(session.duration)}</span>
@@ -222,9 +296,7 @@ export default function StatsPage() {
                       <span className="text-sm text-muted-foreground">
                         {formatDate(session.start)}
                       </span>
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        session.mode === "work" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
-                      }`}>
+                      <span className={`px-2 py-1 rounded text-xs ${session.mode === "work" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
                         {session.mode}
                       </span>
                       <span className="text-sm font-medium">{formatDuration(session.duration)}</span>
