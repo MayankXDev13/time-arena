@@ -294,23 +294,28 @@ export const getHistory = query({
 });
 
 export const getContributionGraph = query({
-  args: { userId: v.string(), days: v.optional(v.number()) },
+  args: { userId: v.string(), year: v.optional(v.number()) },
   handler: async (ctx, args) => {
-    const days = args.days || 365;
-    const now = Date.now();
-    const startDate = now - days * 24 * 60 * 60 * 1000;
+    const year = args.year || new Date().getFullYear();
+    const startOfYear = new Date(year, 0, 1).getTime();
+    const endOfYear = new Date(year, 11, 31, 23, 59, 59, 999).getTime();
 
     const sessions = await ctx.db
       .query("sessions")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .filter((q) => q.gt(q.field("start"), startDate))
+      .filter((q) => q.and(
+        q.gt(q.field("start"), startOfYear),
+        q.lt(q.field("start"), endOfYear)
+      ))
       .collect();
 
     const dailyData: { [key: string]: { minutes: number; sessions: number } } = {};
 
-    for (let i = 0; i < days; i++) {
-      const date = new Date(now - i * 24 * 60 * 60 * 1000);
-      const dateStr = date.toISOString().split("T")[0];
+    const startDate = new Date(year, 0, 1);
+    const endDate = new Date(year, 11, 31);
+
+    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+      const dateStr = d.toISOString().split("T")[0];
       dailyData[dateStr] = { minutes: 0, sessions: 0 };
     }
 

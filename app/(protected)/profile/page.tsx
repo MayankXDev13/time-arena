@@ -20,14 +20,14 @@ export default function ProfilePage() {
   const { user, isAuthenticated } = useAuth();
   const { isOpen } = useSidebarStore();
   const [activeTab, setActiveTab] = useState("overview");
-  const [contributionDays, setContributionDays] = useState(365);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   
   useThemeSync();
 
   const stats = useQuery(api.sessions.getStats, user?.id ? { userId: user.id as any } : "skip");
   const contribution = useQuery(
     api.sessions.getContributionGraph,
-    user?.id ? { userId: user.id, days: contributionDays } : "skip"
+    user?.id ? { userId: user.id, year: selectedYear } : "skip"
   );
   const categories = useQuery(api.categories.list, user?.id ? { userId: user.id as any } : "skip");
 
@@ -75,7 +75,7 @@ export default function ProfilePage() {
               />
               <FocusHeatmap
                 data={contribution || []}
-                onFilterChange={setContributionDays}
+                onYearChange={setSelectedYear}
               />
               <CategoryQuickAccess categories={categories} stats={stats.categoryStats} />
             </div>

@@ -4,40 +4,56 @@ import { useMemo, useState } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { format, subDays, startOfYear, endOfYear, eachDayOfInterval, getDay, getMonth, startOfWeek, endOfWeek, isSameMonth, isToday } from "date-fns";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+import {
+  format,
+  startOfYear,
+  endOfYear,
+  eachDayOfInterval,
+  startOfWeek,
+  endOfWeek,
+  addDays,
+  getMonth,
+  isToday,
+} from "date-fns";
+
 import { formatTime } from "@/lib/constants";
 
 interface HeatmapData {
-  date: string;
+  date: string; 
   minutes: number;
   sessions: number;
 }
 
 interface FocusHeatmapProps {
   data: HeatmapData[];
-  onFilterChange?: (days: number) => void;
+  onYearChange?: (year: number) => void;
 }
 
+
 const INTENSITY_COLORS = [
-  "bg-muted",
-  "bg-rose-300",
-  "bg-rose-400",
-  "bg-rose-500",
-  "bg-rose-600",
-  "bg-rose-700",
+  "bg-muted/40 border border-border/60",
+  "bg-rose-300/70 border border-rose-300/30",
+  "bg-rose-400/80 border border-rose-400/30",
+  "bg-rose-500/90 border border-rose-500/30",
+  "bg-rose-600 border border-rose-600/30",
 ];
 
-const INTENSITY_THRESHOLDS = [0, 30, 60, 120, 180, 300];
+const THRESHOLDS = [0, 30, 60, 120, 240];
 
-const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-function getIntensity(minutes: number): number {
-  if (minutes === 0) return 0;
-  for (let i = INTENSITY_THRESHOLDS.length - 1; i >= 0; i--) {
-    if (minutes >= INTENSITY_THRESHOLDS[i]) return i + 1;
-  }
-  return 1;
+function getIntensity(minutes: number) {
+  if (minutes <= 0) return 0;
+  if (minutes < THRESHOLDS[1]) return 1;
+  if (minutes < THRESHOLDS[2]) return 2;
+  if (minutes < THRESHOLDS[3]) return 3;
+  return 4;
 }
 
 function formatDateLabel(dateStr: string): string {
@@ -51,201 +67,247 @@ function formatMinutes(minutes: number): string {
   return formatTime(minutes);
 }
 
-export function FocusHeatmap({ data, onFilterChange }: FocusHeatmapProps) {
-  const [filterDays, setFilterDays] = useState(365);
 
-  const handleFilterChange = (days: number) => {
-    setFilterDays(days);
-    onFilterChange?.(days);
+const GITHUB_DAY_LABELS = [
+  { day: 1, label: "Mon" },
+  { day: 3, label: "Wed" },
+  { day: 5, label: "Fri" },
+];
+
+
+const TILE = 11;
+const GAP = 3;
+
+export function FocusHeatmap({ data, onYearChange }: FocusHeatmapProps) {
+  const currentYear = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+
+  const yearOptions = [currentYear - 1, currentYear];
+
+  const handleYearChange = (year: number) => {
+    setSelectedYear(year);
+    onYearChange?.(year);
   };
 
-  const { gridData, monthLabels, totalMinutes, totalSessions, maxMinutes } = useMemo(() => {
-    const today = new Date();
-    const startDate = startOfYear(subDays(today, 364));
-    const endDate = endOfYear(today);
+  const { weeks, monthLabels, totalMinutes, totalSessions } = useMemo(() => {
+    const yearStart = startOfYear(new Date(selectedYear, 0, 1));
+    const yearEnd = endOfYear(new Date(selectedYear, 0, 1));
 
-    const allDays = eachDayOfInterval({ start: startDate, end: endDate });
+    
+    const gridStart = startOfWeek(yearStart, { weekStartsOn: 0 }); 
+    const gridEnd = endOfWeek(yearEnd, { weekStartsOn: 0 });
 
+    const allDays = eachDayOfInterval({ start: gridStart, end: gridEnd });
+
+    
     const dataMap = new Map<string, HeatmapData>();
-    data.forEach((d) => dataMap.set(d.date, d));
+    for (const d of data) dataMap.set(d.date, d);
 
-    const grid: (HeatmapData | null)[][] = Array(7)
-      .fill(null)
-      .map(() => Array(Math.ceil(allDays.length / 7)).fill(null));
+    const weekCount = Math.ceil(allDays.length / 7);
 
-    const monthLabels: { label: string; index: number }[] = [];
+    const weeks: HeatmapData[][] = Array.from({ length: weekCount }, (_, w) => {
+      const weekStart = addDays(gridStart, w * 7);
+      return Array.from({ length: 7 }, (_, dayIndex) => {
+        const date = addDays(weekStart, dayIndex);
+        const dateStr = format(date, "yyyy-MM-dd");
 
-    allDays.forEach((date, i) => {
-      const weekIndex = Math.floor(i / 7);
-      const dayIndex = getDay(date);
-      const dateStr = format(date, "yyyy-MM-dd");
-
-      grid[dayIndex][weekIndex] = dataMap.get(dateStr) || {
-        date: dateStr,
-        minutes: 0,
-        sessions: 0,
-      };
+        return (
+          dataMap.get(dateStr) || {
+            date: dateStr,
+            minutes: 0,
+            sessions: 0,
+          }
+        );
+      });
     });
 
-    let currentMonth = -1;
-    grid[0].forEach((cell, weekIndex) => {
-      if (cell) {
-        const month = getMonth(new Date(cell.date));
-        if (month !== currentMonth) {
-          currentMonth = month;
-          monthLabels.push({
-            label: format(new Date(cell.date), "MMM"),
-            index: weekIndex,
-          });
-        }
+    
+    const monthLabels: { index: number; label: string }[] = [];
+    let lastMonth = -1;
+
+    for (let w = 0; w < weeks.length; w++) {
+      const firstDayOfWeek = weeks[w][0]; 
+      const m = getMonth(new Date(firstDayOfWeek.date));
+      if (m !== lastMonth) {
+        lastMonth = m;
+        monthLabels.push({
+          index: w,
+          label: format(new Date(firstDayOfWeek.date), "MMM"),
+        });
       }
-    });
+    }
 
-    let totalMins = 0;
-    let totalSess = 0;
-    let maxMins = 0;
+    let totalMinutes = 0;
+    let totalSessions = 0;
+    for (const d of data) {
+      totalMinutes += d.minutes;
+      totalSessions += d.sessions;
+    }
 
-    data.forEach((d) => {
-      totalMins += d.minutes;
-      totalSess += d.sessions;
-      if (d.minutes > maxMins) maxMins = d.minutes;
-    });
-
-    return {
-      gridData: grid,
-      monthLabels,
-      totalMinutes: totalMins,
-      totalSessions: totalSess,
-      maxMinutes: maxMins,
-    };
-  }, [data]);
+    return { weeks, monthLabels, totalMinutes, totalSessions };
+  }, [data, selectedYear]);
 
   return (
     <Card className="w-full">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-start justify-between gap-3">
           <div>
-            <CardTitle>Focus Activity</CardTitle>
-            <CardDescription>
-              {formatTime(totalMinutes)} across {totalSessions} sessions in the last year
+            <CardTitle className="text-base">Focus Activity</CardTitle>
+            <CardDescription className="text-xs">
+              {totalSessions} sessions • {formatTime(totalMinutes)} in {selectedYear}
             </CardDescription>
           </div>
+
           <div className="flex gap-1">
-            {[
-              { label: "7D", days: 7 },
-              { label: "30D", days: 30 },
-              { label: "90D", days: 90 },
-              { label: "365D", days: 365 },
-            ].map(({ label, days }) => (
+            {yearOptions.map((year) => (
               <Button
-                key={days}
-                variant={filterDays === days ? "default" : "outline"}
+                key={year}
+                variant={selectedYear === year ? "default" : "outline"}
                 size="sm"
-                onClick={() => handleFilterChange(days)}
-                className="h-7 px-2 text-xs"
+                onClick={() => handleYearChange(year)}
+                className="h-7 px-3 text-xs"
               >
-                {label}
+                {year}
               </Button>
             ))}
           </div>
         </div>
       </CardHeader>
+
       <CardContent>
-        <Tooltip.Provider delayDuration={200}>
-          <div className="overflow-x-auto">
-            <div className="inline-flex min-w-full">
-              <div className="flex">
-                <div className="flex flex-col justify-between pr-2 pt-5 pb-1">
-                  {DAY_LABELS.map((label) => (
+        <Tooltip.Provider delayDuration={120}>
+        
+          <div className="overflow-x-auto heatmap-scroll">
+         
+            <div className="inline-flex w-fit">
+             
+              <div className="relative pr-2 pt-6">
+                <div
+                  className="w-8"
+                  style={{
+                    height: `calc(7*${TILE}px + 6*${GAP}px)`,
+                  }}
+                >
+                  {GITHUB_DAY_LABELS.map((d) => (
                     <div
-                      key={label}
-                      className="h-3 text-[10px] text-muted-foreground font-medium"
-                      style={{ lineHeight: "12px" }}
+                      key={d.day}
+                      className="absolute left-2 my-5 text-[10px] text-muted-foreground"
+                      style={{
+                        top: d.day * (TILE + GAP),
+                      }}
                     >
-                      {label}
+                      {d.label}
                     </div>
                   ))}
                 </div>
-                <div>
-                  <div className="flex mb-1 ml-1">
-                    {gridData[0].map((_, weekIndex) => {
-                      const monthLabel = monthLabels.find((m) => m.index === weekIndex);
-                      return (
-                        <div
-                          key={weekIndex}
-                          className="w-3 text-[10px] text-muted-foreground font-medium text-center"
-                          style={{ marginLeft: weekIndex === 0 ? "0" : "0" }}
-                        >
-                          {monthLabel?.label || ""}
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="flex gap-[3px]">
-                    {gridData[0].map((_, weekIndex) => (
-                      <div key={weekIndex} className="flex flex-col gap-[3px]">
-                        {gridData.map((day) => {
-                          const cell = day[weekIndex];
-                          const intensity = cell ? getIntensity(cell.minutes) : 0;
-                          const date = cell ? new Date(cell.date) : null;
+              </div>
 
-                          return (
-                            <Tooltip.Root key={`${weekIndex}-${day[0]?.date || weekIndex}`}>
-                              <Tooltip.Trigger asChild>
-                                <div
-                                  className={cn(
-                                    "w-3 h-3 rounded-[2px] cursor-pointer transition-all duration-150",
-                                    "hover:ring-2 hover:ring-rose-400 hover:ring-offset-1 hover:ring-offset-background",
-                                    INTENSITY_COLORS[intensity]
-                                  )}
-                                />
-                              </Tooltip.Trigger>
-                              <Tooltip.Portal>
-                                <Tooltip.Content
-                                  className={cn(
-                                    "z-50 px-3 py-2 rounded-lg shadow-xl border",
-                                    "bg-popover text-popover-foreground",
-                                    "animate-in fade-in zoom-in-95 duration-150"
-                                  )}
-                                  sideOffset={5}
-                                >
-                                  {cell && date && (
-                                    <div className="space-y-1">
-                                      <div className="text-sm font-semibold">
-                                        {formatDateLabel(cell.date)}
-                                      </div>
-                                      <div className="text-xs text-muted-foreground">
-                                        {formatMinutes(cell.minutes)}
-                                      </div>
-                                      <div className="text-xs text-muted-foreground">
-                                        {cell.sessions} session{cell.sessions !== 1 ? "s" : ""}
-                                      </div>
-                                    </div>
-                                  )}
-                                  <Tooltip.Arrow className="fill-popover" />
-                                </Tooltip.Content>
-                              </Tooltip.Portal>
-                            </Tooltip.Root>
-                          );
-                        })}
+              <div>
+              
+                <div
+                  className="mb-2 flex"
+                  style={{
+                    gap: `${GAP}px`,
+                  }}
+                >
+                  {weeks.map((_, weekIndex) => {
+                    const month = monthLabels.find((m) => m.index === weekIndex);
+                    return (
+                      <div
+                        key={weekIndex}
+                        className="text-[10px] text-muted-foreground"
+                        style={{ width: TILE }}
+                      >
+                        {month?.label ?? ""}
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
+                </div>
+
+            
+                <div className="flex" style={{ gap: `${GAP}px` }}>
+                  {weeks.map((week, weekIndex) => (
+                    <div
+                      key={weekIndex}
+                      className="flex flex-col"
+                      style={{ gap: `${GAP}px` }}
+                    >
+                      {week.map((cell, dayIndex) => {
+                        const intensity = getIntensity(cell.minutes);
+
+                        return (
+                          <Tooltip.Root key={`${weekIndex}-${dayIndex}`}>
+                            <Tooltip.Trigger asChild>
+                              <button
+                                className={cn(
+                                  "rounded-[2px]",
+                                  "transition-transform duration-150",
+                                  "hover:scale-[1.08]",
+                                  "focus:outline-none focus:ring-2 focus:ring-rose-400 focus:ring-offset-2 focus:ring-offset-background",
+                                  INTENSITY_COLORS[intensity]
+                                )}
+                                style={{
+                                  width: TILE,
+                                  height: TILE,
+                                }}
+                              />
+                            </Tooltip.Trigger>
+
+                            <Tooltip.Portal>
+                              <Tooltip.Content
+                                side="top"
+                                sideOffset={8}
+                                className={cn(
+                                  "z-50 rounded-lg border bg-popover px-3 py-2 shadow-xl",
+                                  "animate-in fade-in zoom-in-95 duration-150"
+                                )}
+                              >
+                                <div className="space-y-1">
+                                  <div className="text-xs font-medium">
+                                    {formatDateLabel(cell.date)}
+                                  </div>
+
+                                  <div className="text-[11px] text-muted-foreground">
+                                    {formatMinutes(cell.minutes)} • {cell.sessions} session
+                                    {cell.sessions !== 1 ? "s" : ""}
+                                  </div>
+                                </div>
+                                <Tooltip.Arrow className="fill-popover" />
+                              </Tooltip.Content>
+                            </Tooltip.Portal>
+                          </Tooltip.Root>
+                        );
+                      })}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           </div>
-          <div className="flex items-center justify-end gap-2 mt-4 pt-2 border-t">
-            <span className="text-xs text-muted-foreground">Less</span>
-            {INTENSITY_COLORS.map((color, i) => (
+
+      
+          <div className="mt-4 flex items-center justify-end gap-2 border-t pt-3">
+            <span className="text-[11px] text-muted-foreground">Less</span>
+            {INTENSITY_COLORS.map((c, i) => (
               <div
                 key={i}
-                className={cn("w-3 h-3 rounded-[2px]", color)}
+                className={cn("rounded-[2px]", c)}
+                style={{ width: TILE, height: TILE }}
               />
             ))}
-            <span className="text-xs text-muted-foreground">More</span>
+            <span className="text-[11px] text-muted-foreground">More</span>
           </div>
         </Tooltip.Provider>
+
+      
+        <style jsx global>{`
+          .heatmap-scroll::-webkit-scrollbar {
+            height: 0px;
+          }
+          .heatmap-scroll {
+            scrollbar-width: none;
+          }
+        `}</style>
       </CardContent>
     </Card>
   );
