@@ -38,18 +38,51 @@ export const getStats = query({
     let todayMinutes = 0;
     let weeklyMinutes = 0;
     let currentStreak = 0;
+    let totalSessions = 0;
+    let totalMinutes = 0;
+    let longestSession = 0;
+    let workMinutes = 0;
+    let breakMinutes = 0;
 
     const workSessions = sessions.filter((s) => s.mode === "work");
 
-    workSessions.forEach((session) => {
+    const last7Days: { [key: string]: number } = {};
+    const categoryMinutes: { [key: string]: number } = {};
+
+    for (let i = 0; i < 7; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      last7Days[date.toDateString()] = 0;
+    }
+
+    sessions.forEach((session) => {
       const sessionTime = session.start;
+      const durationMinutes = Math.floor(session.duration / 60);
+      const sessionDate = new Date(sessionTime).toDateString();
 
-      if (sessionTime >= today) {
-        todayMinutes += Math.floor(session.duration / 60);
-      }
+      if (session.mode === "work") {
+        if (sessionTime >= today) {
+          todayMinutes += durationMinutes;
+        }
 
-      if (sessionTime >= weekAgo) {
-        weeklyMinutes += Math.floor(session.duration / 60);
+        if (sessionTime >= weekAgo) {
+          weeklyMinutes += durationMinutes;
+        }
+
+        if (last7Days[sessionDate] !== undefined) {
+          last7Days[sessionDate] += durationMinutes;
+        }
+
+        totalSessions++;
+        totalMinutes += durationMinutes;
+        workMinutes += durationMinutes;
+        longestSession = Math.max(longestSession, durationMinutes);
+
+        if (session.categoryId) {
+          categoryMinutes[session.categoryId] = (categoryMinutes[session.categoryId] || 0) + durationMinutes;
+        }
+      } else {
+        breakMinutes += durationMinutes;
       }
     });
 
@@ -70,10 +103,21 @@ export const getStats = query({
       }
     }
 
+    const dailyMinutes = Object.entries(last7Days)
+      .map(([date, minutes]) => ({ date, minutes }))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
     return {
       todayMinutes,
       weeklyMinutes,
       currentStreak,
+      totalSessions,
+      totalMinutes,
+      longestSession,
+      workMinutes,
+      breakMinutes,
+      dailyMinutes,
+      categoryMinutes,
     };
   },
 });

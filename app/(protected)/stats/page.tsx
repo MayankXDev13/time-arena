@@ -73,6 +73,8 @@ export default function StatsPage() {
 
   const hasActiveFilters = selectedCategoryId !== undefined || selectedMode !== "all";
 
+  const maxDailyMinutes = Math.max(...(stats?.dailyMinutes?.map((d: any) => d.minutes) || [1]));
+
   return (
     <div className={`min-h-screen bg-background transition-all duration-300 ${
       isOpen ? "md:pl-64" : "md:pl-0"
@@ -80,20 +82,66 @@ export default function StatsPage() {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <h1 className="text-2xl font-bold text-foreground mb-8">Statistics</h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-card p-6 rounded-lg border border-border">
-            <h3 className="text-lg font-semibold text-card-foreground mb-2">Today's Focus</h3>
-            <p className="text-3xl font-bold text-primary">{stats?.todayMinutes || 0}m</p>
+            <h3 className="text-sm font-medium text-muted-foreground mb-1">Today's Focus</h3>
+            <p className="text-2xl font-bold text-primary">{stats?.todayMinutes || 0}m</p>
           </div>
           <div className="bg-card p-6 rounded-lg border border-border">
-            <h3 className="text-lg font-semibold text-card-foreground mb-2">Current Streak</h3>
-            <p className="text-3xl font-bold text-primary">{stats?.currentStreak || 0} days</p>
+            <h3 className="text-sm font-medium text-muted-foreground mb-1">Current Streak</h3>
+            <p className="text-2xl font-bold text-primary">{stats?.currentStreak || 0} days</p>
           </div>
           <div className="bg-card p-6 rounded-lg border border-border">
-            <h3 className="text-lg font-semibold text-card-foreground mb-2">This Week</h3>
-            <p className="text-3xl font-bold text-primary">{stats?.weeklyMinutes || 0}m</p>
+            <h3 className="text-sm font-medium text-muted-foreground mb-1">This Week</h3>
+            <p className="text-2xl font-bold text-primary">{stats?.weeklyMinutes || 0}m</p>
+          </div>
+          <div className="bg-card p-6 rounded-lg border border-border">
+            <h3 className="text-sm font-medium text-muted-foreground mb-1">Total Focus Time</h3>
+            <p className="text-2xl font-bold text-primary">{stats?.totalMinutes || 0}m</p>
           </div>
         </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className="bg-card p-6 rounded-lg border border-border">
+            <h3 className="text-lg font-semibold text-card-foreground mb-4">Last 7 Days</h3>
+            <div className="space-y-3">
+              {stats?.dailyMinutes?.map((day: any) => {
+                const percentage = maxDailyMinutes > 0 ? (day.minutes / maxDailyMinutes) * 100 : 0;
+                const date = new Date(day.date);
+                const dayName = date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+                return (
+                  <div key={day.date} className="flex items-center gap-3">
+                    <span className="text-sm text-muted-foreground w-24">{dayName}</span>
+                    <div className="flex-1 h-8 bg-accent rounded-md overflow-hidden">
+                      <div
+                        className="h-full bg-primary rounded-md transition-all duration-300"
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                    <span className="text-sm font-medium w-16 text-right">{day.minutes}m</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {Object.keys(stats?.categoryMinutes || {}).length > 0 && (
+          <div className="bg-card p-6 rounded-lg border border-border mb-8">
+            <h3 className="text-lg font-semibold text-card-foreground mb-4">By Category</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {Object.entries(stats?.categoryMinutes || {}).map(([categoryId, minutes]) => {
+                const category = categories?.find((cat: any) => cat._id === categoryId);
+                return (
+                  <div key={categoryId} className="p-4 rounded-lg bg-accent/50">
+                    <p className="text-sm text-muted-foreground truncate">{category?.name || "Unknown"}</p>
+                    <p className="text-xl font-bold text-primary">{minutes as number}m</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="bg-card rounded-lg border border-border">
           <div className="p-6 border-b border-border flex flex-wrap items-center justify-between gap-4">
