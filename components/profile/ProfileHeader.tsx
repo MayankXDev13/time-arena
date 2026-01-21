@@ -26,6 +26,7 @@ export function ProfileHeader({ stats }: ProfileHeaderProps) {
   const [isUploading, setIsUploading] = useState(false);
 
   const uploadAvatar = useMutation(api.users.updateAvatar);
+  const getUploadUrl = useMutation(api.users.getUploadUrl);
   const updateName = useMutation(api.users.updateProfile);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,19 +35,16 @@ export function ProfileHeader({ stats }: ProfileHeaderProps) {
 
     setIsUploading(true);
     try {
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: JSON.stringify({ name: file.name, type: file.type }),
-      });
-      const { url, storageId } = await response.json();
+      const uploadUrl = await getUploadUrl();
 
-      await fetch(url, {
-        method: "PUT",
+      await fetch(uploadUrl, {
+        method: "POST",
         body: file,
         headers: { "Content-Type": file.type },
+      }).then(async (response) => {
+        const data = await response.json();
+        await uploadAvatar({ userId: user!.id, avatarStorageId: data.storageId });
       });
-
-      await uploadAvatar({ userId: user!.id, avatarStorageId: storageId });
     } catch (error) {
       console.error("Failed to upload avatar:", error);
     } finally {

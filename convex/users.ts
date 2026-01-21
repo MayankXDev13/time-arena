@@ -140,3 +140,10 @@ export const getAvatarUrl = query({
     return url;
   },
 });
+
+export const getUploadUrl = mutation({
+  handler: async (ctx) => {
+    const uploadUrl = await ctx.storage.generateUploadUrl();
+    return uploadUrl;
+  },
+});

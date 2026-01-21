@@ -10,7 +10,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { AccountInfo } from "@/components/profile/AccountInfo";
 import { Preferences } from "@/components/profile/Preferences";
-import { CategoryQuickAccess } from "@/components/profile/CategoryQuickAccess";
 import { SessionHistory } from "@/components/profile/SessionHistory";
 import { FocusHeatmap } from "@/components/focus/FocusHeatmap";
 import { Achievements } from "@/components/profile/Achievements";
@@ -29,13 +28,12 @@ export default function ProfilePage() {
     api.sessions.getContributionGraph,
     user?.id ? { userId: user.id, year: selectedYear } : "skip"
   );
-  const categories = useQuery(api.categories.list, user?.id ? { userId: user.id as any } : "skip");
 
   if (!isAuthenticated || !user) {
     return null;
   }
 
-  if (!stats || !contribution || categories === undefined) {
+  if (!stats || !contribution) {
     return (
       <div className={`min-h-screen bg-background transition-all duration-300 ${
         isOpen ? "md:pl-64" : "md:pl-0"
@@ -77,7 +75,6 @@ export default function ProfilePage() {
                 data={contribution || []}
                 onYearChange={setSelectedYear}
               />
-              <CategoryQuickAccess categories={categories} stats={stats.categoryStats} />
             </div>
           </TabsContent>
 
