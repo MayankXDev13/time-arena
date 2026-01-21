@@ -12,16 +12,15 @@ interface CategoryDropdownProps {
   className?: string;
 }
 
-const TAILWIND_COLORS = [
-  "bg-red-500",
-  "bg-orange-500",
-  "bg-yellow-500",
-  "bg-green-500",
-  "bg-blue-500",
-  "bg-indigo-500",
-  "bg-purple-500",
-  "bg-pink-500",
-  "bg-gray-500",
+const COLOR_OPTIONS = [
+  { label: "Red", value: "bg-red-500" },
+  { label: "Yellow", value: "bg-yellow-500" },
+  { label: "Green", value: "bg-green-500" },
+  { label: "Blue", value: "bg-blue-500" },
+  { label: "Indigo", value: "bg-indigo-500" },
+  { label: "Purple", value: "bg-purple-500" },
+  { label: "Pink", value: "bg-pink-500" },
+  { label: "Gray", value: "bg-gray-500" },
 ];
 
 export function CategoryDropdown({ selectedCategoryId, onSelect, className }: CategoryDropdownProps) {
@@ -93,4 +92,4 @@ export function CategoryDropdown({ selectedCategoryId, onSelect, className }: Ca
 }
 
 
-export { TAILWIND_COLORS };
+export { COLOR_OPTIONS };

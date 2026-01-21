@@ -5,7 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { TAILWIND_COLORS } from "@/components/CategoryDropdown";
+import { COLOR_OPTIONS } from "@/components/CategoryDropdown";
 import { Plus, Trash2, Edit2, Check, X } from "lucide-react";
 
 export default function CategoriesPage() {
@@ -16,7 +16,7 @@ export default function CategoriesPage() {
   const deleteCategory = useMutation(api.categories.remove);
 
   const [newCategoryName, setNewCategoryName] = useState("");
-  const [newCategoryColor, setNewCategoryColor] = useState(TAILWIND_COLORS[0]);
+  const [newCategoryColor, setNewCategoryColor] = useState(COLOR_OPTIONS[0].value);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editColor, setEditColor] = useState("");
@@ -31,7 +31,7 @@ export default function CategoriesPage() {
     });
 
     setNewCategoryName("");
-    setNewCategoryColor(TAILWIND_COLORS[0]);
+    setNewCategoryColor(COLOR_OPTIONS[0].value);
   };
 
   const handleEdit = (category: any) => {
@@ -76,9 +76,9 @@ export default function CategoriesPage() {
               onChange={(e) => setNewCategoryColor(e.target.value)}
               className="px-3 py-2 border border-border rounded-md bg-background"
             >
-              {TAILWIND_COLORS.map((color) => (
-                <option key={color} value={color}>
-                  {color}
+              {COLOR_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
                 </option>
               ))}
             </select>
@@ -108,8 +108,10 @@ export default function CategoriesPage() {
                       onChange={(e) => setEditColor(e.target.value)}
                       className="px-2 py-1 border border-border rounded"
                     >
-                      {TAILWIND_COLORS.map((color) => (
-                        <option key={color} value={color}>{color}</option>
+                      {COLOR_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
                       ))}
                     </select>
                     <Button size="sm" onClick={handleSaveEdit}>
