@@ -12,6 +12,11 @@ export interface Session {
 export interface UserSettings {
   userId: string;
   streakThresholdMinutes: number;
+  autoStartBreaks?: boolean;
+  soundEnabled?: boolean;
+  defaultTimerMinutes?: number;
+  breakDurationMinutes?: number;
+  theme?: string;
   createdAt: Date;
   updatedAt: Date;
 }
