@@ -34,6 +34,7 @@ export const getStats = query({
     const now = Date.now();
     const today = new Date(now).setHours(0, 0, 0, 0);
     const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
+    const twoWeeksAgo = now - 14 * 24 * 60 * 60 * 1000;
 
     let todayMinutes = 0;
     let weeklyMinutes = 0;
@@ -47,7 +48,9 @@ export const getStats = query({
     const workSessions = sessions.filter((s) => s.mode === "work");
 
     const last7Days: { [key: string]: number } = {};
-    const categoryMinutes: { [key: string]: number } = {};
+    const categoryMinutesThisWeek: { [key: string]: number } = {};
+    const categoryMinutesPrevWeek: { [key: string]: number } = {};
+    const categorySessionCount: { [key: string]: number } = {};
 
     for (let i = 0; i < 7; i++) {
       const date = new Date();
@@ -79,7 +82,12 @@ export const getStats = query({
         longestSession = Math.max(longestSession, durationMinutes);
 
         if (session.categoryId) {
-          categoryMinutes[session.categoryId] = (categoryMinutes[session.categoryId] || 0) + durationMinutes;
+          if (sessionTime >= weekAgo) {
+            categoryMinutesThisWeek[session.categoryId] = (categoryMinutesThisWeek[session.categoryId] || 0) + durationMinutes;
+            categorySessionCount[session.categoryId] = (categorySessionCount[session.categoryId] || 0) + 1;
+          } else if (sessionTime >= twoWeeksAgo) {
+            categoryMinutesPrevWeek[session.categoryId] = (categoryMinutesPrevWeek[session.categoryId] || 0) + durationMinutes;
+          }
         }
       } else {
         breakMinutes += durationMinutes;
@@ -107,6 +115,39 @@ export const getStats = query({
       .map(([date, minutes]) => ({ date, minutes }))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
+    const categoryMinutes: { [key: string]: number } = {};
+    Object.keys(categoryMinutesThisWeek).forEach(catId => {
+      categoryMinutes[catId] = (categoryMinutesThisWeek[catId] || 0);
+    });
+
+    const allCategoryIds = new Set([
+      ...Object.keys(categoryMinutesThisWeek),
+      ...Object.keys(categoryMinutesPrevWeek),
+    ]);
+
+    const categoryStats = Array.from(allCategoryIds).map((categoryId) => {
+      const thisWeek = categoryMinutesThisWeek[categoryId] || 0;
+      const prevWeek = categoryMinutesPrevWeek[categoryId] || 0;
+      const sessionCount = categorySessionCount[categoryId] || 0;
+
+      let trendPercent = 0;
+      if (prevWeek === 0 && thisWeek > 0) {
+        trendPercent = 100;
+      } else if (prevWeek > 0) {
+        trendPercent = Math.round(((thisWeek - prevWeek) / prevWeek) * 100);
+      }
+
+      return {
+        categoryId,
+        thisWeek,
+        prevWeek,
+        sessionCount,
+        trendPercent,
+      };
+    });
+
+    const totalCategoryMinutes = Object.values(categoryMinutesThisWeek).reduce((a, b) => a + b, 0);
+
     return {
       todayMinutes,
       weeklyMinutes,
@@ -118,6 +159,8 @@ export const getStats = query({
       breakMinutes,
       dailyMinutes,
       categoryMinutes,
+      categoryStats,
+      totalCategoryMinutes,
     };
   },
 });

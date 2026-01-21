@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { CategoryDropdown } from "@/components/CategoryDropdown";
 import { Edit2, Save, X, Trash2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { CategoryStatsCard } from "@/components/CategoryStatsCard";
 
 export default function StatsPage() {
   const { user } = useAuth();
@@ -141,51 +142,65 @@ export default function StatsPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-card-foreground mb-4">Last 7 Days</h3>
+        <div className="grid grid-cols-12 gap-6 mb-8">
+          <div className="col-span-12 bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl shadow-sm p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-card-foreground">
+                Last 7 Days
+              </h3>
+
+              <p className="text-xs text-muted-foreground">
+                {activeDays.length} active days
+              </p>
+            </div>
+
             {stats?.dailyMinutes && stats.dailyMinutes.length > 0 ? (
-              <div className="h-[260px]">
+              <div className="h-[320px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} margin={{ top: 20, right: 0, left: -30, bottom: 0 }}>
+                  <BarChart data={chartData} margin={{ top: 20, right: 20, left: -10, bottom: 0 }}>
                     <defs>
                       <linearGradient id="roseGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#fb7185" />
                         <stop offset="100%" stopColor="#e11d48" />
                       </linearGradient>
                     </defs>
+
                     <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
+
                     <YAxis
                       domain={[0, yAxisMax]}
                       ticks={getYTicks(yAxisMax)}
                       tickFormatter={(v) => `${v}m`}
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
-                      width={36}
+                      tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
+                      width={40}
                     />
+
                     <XAxis
                       dataKey="dayName"
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
+                      tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
                       dy={10}
                     />
+
                     <Tooltip
-                      cursor={{ fill: 'var(--muted)', opacity: 0.2 }}
+                      cursor={{ fill: "var(--muted)", opacity: 0.15 }}
                       content={<CustomTooltip />}
-                      position={{ y: -15 }}
                       isAnimationActive={true}
                       animationDuration={200}
                     />
-                    <Bar dataKey="minutes" barSize={28} radius={[6, 6, 0, 0]} fill="url(#roseGradient)">
+
+                    <Bar dataKey="minutes" barSize={40} radius={[10, 10, 0, 0]} fill="url(#roseGradient)">
                       {chartData.map((entry, index) => (
                         <Cell
                           key={entry.date}
-                          fill={entry.minutes === 0 ? 'url(#roseGradient)' : 'url(#roseGradient)'}
                           style={{
                             opacity: entry.minutes === 0 ? 0.15 : 1,
-                            filter: entry.isToday ? 'drop-shadow(0 0 12px rgba(244, 63, 94, 0.5))' : 'none',
+                            filter: entry.isToday
+                              ? "drop-shadow(0 0 12px rgba(244, 63, 94, 0.6))"
+                              : "none",
                             animationDelay: `${index * 60}ms`,
                           }}
                         />
@@ -195,26 +210,38 @@ export default function StatsPage() {
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="flex items-center justify-center h-[260px] text-muted-foreground text-sm">
+              <div className="flex items-center justify-center h-[320px] text-muted-foreground text-sm">
                 No focus time recorded in the last 7 days
               </div>
             )}
           </div>
         </div>
 
-        {Object.keys(stats?.categoryMinutes || {}).length > 0 && (
-          <div className="bg-card p-6 rounded-lg border border-border mb-8">
+
+        {stats?.categoryStats && stats.categoryStats.length > 0 && (
+          <div className="mb-8">
             <h3 className="text-lg font-semibold text-card-foreground mb-4">By Category</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {Object.entries(stats?.categoryMinutes || {}).map(([categoryId, minutes]) => {
-                const category = categories?.find((cat: any) => cat._id === categoryId);
-                return (
-                  <div key={categoryId} className="p-4 rounded-lg bg-accent/50">
-                    <p className="text-sm text-muted-foreground truncate">{category?.name || "Unknown"}</p>
-                    <p className="text-xl font-bold text-primary">{minutes as number}m</p>
-                  </div>
-                );
-              })}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {(() => {
+                const sortedCategories = [...stats.categoryStats]
+                  .sort((a, b) => b.thisWeek - a.thisWeek)
+                  .slice(0, 8);
+
+                return sortedCategories.map((categoryStat, index) => {
+                  const category = categories?.find((cat: any) => cat._id === categoryStat.categoryId);
+                  if (!category) return null;
+
+                  return (
+                    <CategoryStatsCard
+                      key={categoryStat.categoryId}
+                      category={category}
+                      stats={categoryStat}
+                      totalMinutes={stats.totalCategoryMinutes || 0}
+                      rank={index + 1}
+                    />
+                  );
+                });
+              })()}
             </div>
           </div>
         )}
