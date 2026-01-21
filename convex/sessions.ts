@@ -219,3 +219,117 @@ export const remove = mutation({
     await ctx.db.delete(args.id);
   },
 });
+
+export const getHistory = query({
+  args: {
+    userId: v.string(),
+    limit: v.number(),
+    cursor: v.optional(v.string()),
+    categoryId: v.optional(v.id("categories")),
+    mode: v.optional(v.union(v.literal("work"), v.literal("break"))),
+    startDate: v.optional(v.number()),
+    endDate: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    let sessionsQuery = ctx.db
+      .query("sessions")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .order("desc");
+
+    let sessions = await sessionsQuery.take(args.limit + 1);
+
+    if (args.cursor) {
+      const cursorSession = await ctx.db.get(args.cursor as any);
+      if (cursorSession) {
+        sessionsQuery = ctx.db
+          .query("sessions")
+          .withIndex("by_user", (q) => q.eq("userId", args.userId))
+          .filter((q) => q.lt(q.field("_id"), args.cursor as any))
+          .order("desc");
+        sessions = await sessionsQuery.take(args.limit + 1);
+      }
+    }
+
+    if (args.categoryId) {
+      sessions = sessions.filter((s) => s.categoryId === args.categoryId);
+    }
+
+    if (args.mode) {
+      sessions = sessions.filter((s) => s.mode === args.mode);
+    }
+
+    if (args.startDate) {
+      sessions = sessions.filter((s) => s.start >= args.startDate!);
+    }
+
+    if (args.endDate) {
+      sessions = sessions.filter((s) => s.start <= args.endDate!);
+    }
+
+    const hasMore = sessions.length > args.limit;
+    const page = hasMore ? sessions.slice(0, args.limit) : sessions;
+    const nextCursor = hasMore && page.length > 0 ? page[page.length - 1]._id : undefined;
+
+    const totalCount = await ctx.db
+      .query("sessions")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    const filteredCount = totalCount.filter((s) => {
+      if (args.categoryId && s.categoryId !== args.categoryId) return false;
+      if (args.mode && s.mode !== args.mode) return false;
+      if (args.startDate && s.start < args.startDate!) return false;
+      if (args.endDate && s.start > args.endDate!) return false;
+      return true;
+    }).length;
+
+    return {
+      page,
+      nextCursor,
+      hasMore,
+      totalPages: Math.ceil(filteredCount / args.limit),
+      totalCount: filteredCount,
+    };
+  },
+});
+
+export const getContributionGraph = query({
+  args: { userId: v.string(), days: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const days = args.days || 365;
+    const now = Date.now();
+    const startDate = now - days * 24 * 60 * 60 * 1000;
+
+    const sessions = await ctx.db
+      .query("sessions")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .filter((q) => q.gt(q.field("start"), startDate))
+      .collect();
+
+    const dailyData: { [key: string]: { minutes: number; sessions: number } } = {};
+
+    for (let i = 0; i < days; i++) {
+      const date = new Date(now - i * 24 * 60 * 60 * 1000);
+      const dateStr = date.toISOString().split("T")[0];
+      dailyData[dateStr] = { minutes: 0, sessions: 0 };
+    }
+
+    sessions.forEach((session) => {
+      if (session.mode === "work") {
+        const dateStr = new Date(session.start).toISOString().split("T")[0];
+        if (dailyData[dateStr]) {
+          dailyData[dateStr].sessions += 1;
+          dailyData[dateStr].minutes += Math.floor(session.duration / 60);
+        }
+      }
+    });
+
+    return Object.entries(dailyData)
+      .map(([date, data]) => ({
+        date,
+        minutes: data.minutes,
+        sessions: data.sessions,
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+  },
+});
