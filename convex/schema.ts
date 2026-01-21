@@ -23,6 +23,10 @@ export default defineSchema({
   userSettings: defineTable({
     userId: v.string(),
     streakThresholdMinutes: v.number(),
+    autoStartBreaks: v.optional(v.boolean()),
+    soundEnabled: v.optional(v.boolean()),
+    defaultTimerMinutes: v.optional(v.number()),
+    theme: v.optional(v.string()),
   })
     .index("by_user", ["userId"]),
 
@@ -37,6 +41,8 @@ export default defineSchema({
   profiles: defineTable({
     userId: v.string(),
     email: v.optional(v.string()),
+    avatarStorageId: v.optional(v.id("_storage")),
+    bio: v.optional(v.string()),
   })
     .index("by_user", ["userId"]),
 });
