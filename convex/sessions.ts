@@ -2,13 +2,24 @@ import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 
 export const getRecent = query({
-  args: { userId: v.string(), limit: v.number() },
+  args: {
+    userId: v.string(),
+    limit: v.number(),
+    categoryId: v.optional(v.id("categories")),
+  },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const baseQuery = ctx.db
       .query("sessions")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .order("desc")
-      .take(args.limit);
+      .order("desc");
+
+    let sessions = await baseQuery.take(args.limit);
+
+    if (args.categoryId) {
+      sessions = sessions.filter((s) => s.categoryId === args.categoryId);
+    }
+
+    return sessions;
   },
 });
 

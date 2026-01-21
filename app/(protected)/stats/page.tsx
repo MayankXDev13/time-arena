@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,14 +12,22 @@ import { Edit2, Save, X, Trash2 } from "lucide-react";
 export default function StatsPage() {
   const { user } = useAuth();
   const { isOpen } = useSidebarStore();
-  const sessions = useQuery(api.sessions.getRecent, user?.id ? { userId: user.id as any, limit: 50 } : "skip");
+
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>();
+  const [selectedMode, setSelectedMode] = useState<"all" | "work" | "break">("all");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editCategoryId, setEditCategoryId] = useState<string | undefined>();
+
+  const sessions = useQuery(
+    api.sessions.getRecent,
+    user?.id
+      ? { userId: user.id as any, limit: 50, categoryId: selectedCategoryId as any }
+      : "skip"
+  );
   const categories = useQuery(api.categories.list, user?.id ? { userId: user.id as any } : "skip");
   const updateSession = useMutation(api.sessions.update);
   const deleteSession = useMutation(api.sessions.remove);
   const stats = useQuery(api.sessions.getStats, user?.id ? { userId: user.id as any } : "skip");
-
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editCategoryId, setEditCategoryId] = useState<string | undefined>();
 
   const handleEdit = (session: any) => {
     setEditingId(session._id);
@@ -52,6 +60,19 @@ export default function StatsPage() {
     return category?.name || "Unknown";
   };
 
+  const filteredSessions = useMemo(() => {
+    if (!sessions) return [];
+    if (selectedMode === "all") return sessions;
+    return sessions.filter((session: any) => session.mode === selectedMode);
+  }, [sessions, selectedMode]);
+
+  const clearFilters = () => {
+    setSelectedCategoryId(undefined);
+    setSelectedMode("all");
+  };
+
+  const hasActiveFilters = selectedCategoryId !== undefined || selectedMode !== "all";
+
   return (
     <div className={`min-h-screen bg-background transition-all duration-300 ${
       isOpen ? "md:pl-64" : "md:pl-0"
@@ -75,11 +96,50 @@ export default function StatsPage() {
         </div>
 
         <div className="bg-card rounded-lg border border-border">
-          <div className="p-6 border-b border-border">
+          <div className="p-6 border-b border-border flex flex-wrap items-center justify-between gap-4">
             <h2 className="text-lg font-semibold text-card-foreground">Recent Sessions</h2>
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-sm text-muted-foreground">Filters:</span>
+              <CategoryDropdown
+                selectedCategoryId={selectedCategoryId}
+                onSelect={setSelectedCategoryId}
+                className="w-40"
+              />
+              <div className="flex items-center gap-1 bg-accent rounded-lg p-1">
+                <Button
+                  variant={selectedMode === "all" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setSelectedMode("all")}
+                  className="text-xs"
+                >
+                  All
+                </Button>
+                <Button
+                  variant={selectedMode === "work" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setSelectedMode("work")}
+                  className="text-xs"
+                >
+                  Work
+                </Button>
+                <Button
+                  variant={selectedMode === "break" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setSelectedMode("break")}
+                  className="text-xs"
+                >
+                  Break
+                </Button>
+              </div>
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs text-muted-foreground">
+                  Clear
+                </Button>
+              )}
+            </div>
           </div>
           <div className="divide-y divide-border">
-            {sessions?.map((session: any) => (
+            {filteredSessions?.map((session: any) => (
               <div key={session._id} className="p-4">
                 {editingId === session._id ? (
                   <div className="flex items-center justify-between">
@@ -136,7 +196,7 @@ export default function StatsPage() {
                 )}
               </div>
             ))}
-            {sessions?.length === 0 && (
+            {filteredSessions?.length === 0 && (
               <div className="p-8 text-center text-muted-foreground">
                 No sessions yet. Start your first timer session!
               </div>
