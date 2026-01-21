@@ -12,13 +12,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export function Preferences() {
   const { settings, updateSettings, isLoading } = useProfile();
   const { setTheme } = useThemeStore();
-  const { setBreakDuration } = useTimerStore();
+  const { setBreakDuration, setWorkDuration } = useTimerStore();
 
   useEffect(() => {
     if (settings?.breakDurationMinutes) {
       setBreakDuration(settings.breakDurationMinutes);
     }
-  }, [settings?.breakDurationMinutes, setBreakDuration]);
+    if (settings?.defaultTimerMinutes) {
+      setWorkDuration(settings.defaultTimerMinutes);
+    }
+  }, [settings?.breakDurationMinutes, settings?.defaultTimerMinutes, setBreakDuration, setWorkDuration]);
 
   if (isLoading || !settings) {
     return (
