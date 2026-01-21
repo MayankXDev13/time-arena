@@ -1,14 +1,14 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatTime } from "@/lib/constants";
-import { Camera, Mail, Edit2, Check, X } from "lucide-react";
+import { Camera, Mail, Edit2, Check, X, Loader2, AlertCircle } from "lucide-react";
 
 interface ProfileHeaderProps {
   stats: {
@@ -18,12 +18,23 @@ interface ProfileHeaderProps {
   };
 }
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+
 export function ProfileHeader({ stats }: ProfileHeaderProps) {
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditingName, setIsEditingName] = useState(false);
   const [displayName, setDisplayName] = useState(user?.name || "");
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+
+  const profile = useQuery(api.users.getProfile, user?.id ? { userId: user.id } : "skip");
+  const avatarUrl = useQuery(
+    api.users.getAvatarUrl,
+    profile?.profile?.avatarStorageId ? { storageId: profile.profile.avatarStorageId } : "skip"
+  );
 
   const uploadAvatar = useMutation(api.users.updateAvatar);
   const getUploadUrl = useMutation(api.users.getUploadUrl);
@@ -33,20 +44,41 @@ export function ProfileHeader({ stats }: ProfileHeaderProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setUploadError(null);
+    setUploadSuccess(false);
+
+    if (file.size > MAX_FILE_SIZE) {
+      setUploadError("File size must be less than 5MB");
+      return;
+    }
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setUploadError("Please select a valid image file (JPEG, PNG, GIF, or WebP)");
+      return;
+    }
+
     setIsUploading(true);
     try {
       const uploadUrl = await getUploadUrl();
 
-      await fetch(uploadUrl, {
+      const response = await fetch(uploadUrl, {
         method: "POST",
         body: file,
         headers: { "Content-Type": file.type },
-      }).then(async (response) => {
-        const data = await response.json();
-        await uploadAvatar({ userId: user!.id, avatarStorageId: data.storageId });
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to upload file");
+      }
+
+      const data = await response.json();
+      await uploadAvatar({ userId: user!.id, avatarStorageId: data.storageId });
+      setUploadSuccess(true);
+      setTimeout(() => setUploadSuccess(false), 3000);
     } catch (error) {
-      console.error("Failed to upload avatar:", error);
+      const message = error instanceof Error ? error.message : "Failed to upload avatar. Please try again.";
+      setUploadError(message);
     } finally {
       setIsUploading(false);
     }
@@ -65,7 +97,13 @@ export function ProfileHeader({ stats }: ProfileHeaderProps) {
       <CardContent className="flex items-center gap-6 p-6">
         <div className="relative">
           <div className="w-24 h-24 rounded-full bg-primary flex items-center justify-center overflow-hidden">
-            {user?.image ? (
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={user?.name}
+                className="w-full h-full object-cover"
+              />
+            ) : user?.image ? (
               <img
                 src={user.image}
                 alt={user.name}
@@ -81,10 +119,17 @@ export function ProfileHeader({ stats }: ProfileHeaderProps) {
             size="icon"
             className="absolute bottom-0 right-0 rounded-full w-8 h-8"
             variant="secondary"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => {
+              setUploadError(null);
+              fileInputRef.current?.click();
+            }}
             disabled={isUploading}
           >
-            <Camera className="w-4 h-4" />
+            {isUploading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Camera className="w-4 h-4" />
+            )}
           </Button>
           <input
             ref={fileInputRef}
@@ -93,6 +138,18 @@ export function ProfileHeader({ stats }: ProfileHeaderProps) {
             className="hidden"
             onChange={handleAvatarUpload}
           />
+          {uploadError && (
+            <div className="absolute -bottom-10 left-0 right-0 flex items-center gap-1 text-xs text-red-500 bg-white dark:bg-gray-900 p-1 rounded">
+              <AlertCircle className="w-3 h-3 flex-shrink-0" />
+              <span>{uploadError}</span>
+            </div>
+          )}
+          {uploadSuccess && (
+            <div className="absolute -bottom-10 left-0 right-0 flex items-center gap-1 text-xs text-green-600 bg-white dark:bg-gray-900 p-1 rounded">
+              <Check className="w-3 h-3 flex-shrink-0" />
+              <span>Avatar uploaded!</span>
+            </div>
+          )}
         </div>
 
         <div className="flex-1 min-w-0">
