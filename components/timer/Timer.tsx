@@ -1,12 +1,15 @@
+"use client";
+
 import { TimerDisplay } from './TimerDisplay';
 import { TimerControls } from './TimerControls';
 import { TimerModeSelector } from './TimerModeSelector';
+import { CategoryDropdown } from '@/components/CategoryDropdown';
 import { useTimer } from '@/hooks/useTimer';
 import { useTimerStore } from '@/stores/useTimerStore';
 
 export function Timer() {
   const { start, pause, resume, stop, reset, actualElapsed } = useTimer();
-  const { isRunning, elapsed, isCompleted, mode, workDuration, breakDuration } = useTimerStore();
+  const { isRunning, elapsed, isCompleted, mode, workDuration, breakDuration, selectedCategoryId, setSelectedCategoryId } = useTimerStore();
 
   const handleStop = async () => {
     await stop();
@@ -22,6 +25,11 @@ export function Timer() {
         mode={mode}
         workDuration={workDuration}
         breakDuration={breakDuration}
+      />
+      <CategoryDropdown
+        selectedCategoryId={selectedCategoryId}
+        onSelect={setSelectedCategoryId}
+        className="w-64"
       />
       <TimerControls
         isRunning={isRunning}

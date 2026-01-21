@@ -36,8 +36,7 @@ export const useSettingsStore = create<SettingsState>()(
       },
     }),
     {
-      name: 'timer-arena-settings',
-      storage: createJSONStorage(() => localStorage),
+      name: 'settings-storage',
     }
   )
 );

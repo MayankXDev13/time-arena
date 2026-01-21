@@ -1,5 +1,8 @@
+"use client"
 import { useCallback, useRef, useEffect } from 'react';
-import { useSessions } from './useSessions';
+import { useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { useAuth } from '@/hooks/useAuth';
 import { useTimerStore, TimerMode } from '@/stores/useTimerStore';
 import { showTimerNotification, getCompletedNotification, requestNotificationPermission } from '@/utils/notifications';
 import { useTimerSync } from './useTimerSync';
@@ -16,13 +19,17 @@ export function useTimer() {
     breakDuration,
     targetDuration,
     isCompleted,
+    selectedCategoryId,
     setTimer,
   } = useTimerStore();
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const notifiedRef = useRef(false);
   const startTimeRef = useRef<number>(0);
-  const { createSession, endSession } = useSessions();
+  const { user } = useAuth();
+  const createSessionMutation = useMutation(api.sessions.create);
+  const updateSessionMutation = useMutation(api.sessions.update);
+  const endSessionMutation = useMutation(api.sessions.endSession);
   const { restoreFromSupabase } = useTimerSync();
 
   useEffect(() => {
@@ -45,15 +52,18 @@ export function useTimer() {
   }, [mode, targetDuration]);
 
   const start = useCallback(async () => {
+    if (!user?.id) return;
+
     clearIntervalRef();
     notifiedRef.current = false;
 
-    const startTime = new Date();
-    const newSession = await createSession({
-      userId: '',
+    const startTime = Date.now();
+    const sessionId = await createSessionMutation({
+      userId: user.id as any,
+      categoryId: selectedCategoryId as any,
       start: startTime,
-      endedAt: null,
       duration: 0,
+      mode,
     });
 
     startTimeRef.current = Date.now();
@@ -67,7 +77,7 @@ export function useTimer() {
           isRunning: true,
           actualElapsed: currentActualElapsed,
           elapsed: currentActualElapsed,
-          sessionId: newSession.id,
+          sessionId,
           lastStartTime: startTimeRef.current,
           isCompleted: completed,
         });
@@ -79,7 +89,7 @@ export function useTimer() {
     }, 100);
 
     requestNotificationPermission();
-  }, [createSession, setTimer, clearIntervalRef, checkCompletion, targetDuration]);
+  }, [user?.id, selectedCategoryId, mode, createSessionMutation, setTimer, clearIntervalRef, checkCompletion, targetDuration]);
 
   const pause = useCallback(() => {
     clearIntervalRef();
@@ -118,11 +128,15 @@ export function useTimer() {
     clearIntervalRef();
     notifiedRef.current = false;
 
-    const endTime = new Date();
+    const endTime = Date.now();
     const duration = actualElapsed;
 
     if (sessionId) {
-      await endSession(sessionId, endTime, duration);
+      await endSessionMutation({
+        id: sessionId as any,
+        endedAt: endTime,
+        duration,
+      });
     }
 
     setTimer({
@@ -133,7 +147,7 @@ export function useTimer() {
       lastStartTime: null,
       isCompleted: false,
     });
-  }, [sessionId, actualElapsed, endSession, setTimer, clearIntervalRef]);
+  }, [sessionId, actualElapsed, endSessionMutation, setTimer, clearIntervalRef]);
 
   const reset = useCallback(() => {
     clearIntervalRef();

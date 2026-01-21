@@ -50,8 +50,7 @@ export const useSessionStore = create<SessionState>()(
       },
     }),
     {
-      name: 'timer-arena-sessions',
-      storage: createJSONStorage(() => localStorage),
+      name: 'session-storage',
     }
   )
 );

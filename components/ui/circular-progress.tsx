@@ -1,61 +1,40 @@
-'use client';
+"use client";
 
-import { cn } from '@/lib/utils';
-import type { TimerMode } from '@/stores/useTimerStore';
+import { cn } from "@/lib/utils";
+import type { TimerMode } from "@/stores/useTimerStore";
 
 interface CircularProgressProps {
-  progress: number; // 0-1
-  size?: number;
-  strokeWidth?: number;
-  mode?: TimerMode;
-  isRunning?: boolean;
-  isCompleted?: boolean;
-  children?: React.ReactNode;
+  progress: number;
+  size: number;
+  strokeWidth: number;
+  mode: TimerMode;
+  isRunning: boolean;
+  isCompleted: boolean;
+  children: React.ReactNode;
 }
 
 export function CircularProgress({
   progress,
-  size = 280,
-  strokeWidth = 8,
-  mode = 'work',
-  isRunning = false,
-  isCompleted = false,
+  size,
+  strokeWidth,
+  mode,
+  isRunning,
+  isCompleted,
   children,
 }: CircularProgressProps) {
   const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
+  const circumference = radius * 2 * Math.PI;
   const strokeDasharray = circumference;
   const strokeDashoffset = circumference - (progress * circumference);
 
-  const colors = {
-    work: {
-      track: 'stroke-zinc-700',
-      progress: 'stroke-orange-500',
-      glow: '',
-    },
-    break: {
-      track: 'stroke-zinc-700',
-      progress: 'stroke-green-500',
-      glow: '',
-    },
-    completed: {
-      track: 'stroke-zinc-700',
-      progress: 'stroke-orange-500',
-      glow: '',
-    },
-  };
-
-  const colorScheme = isCompleted ? colors.completed : colors[mode];
+  const strokeColor = mode === 'work' ? 'stroke-primary' : 'stroke-secondary-foreground';
 
   return (
-    <div className="relative flex items-center justify-center">
+    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
       <svg
         width={size}
         height={size}
-        className={cn(
-          'transform -rotate-90 transition-all duration-500',
-          isRunning && 'scale-105'
-        )}
+        className="transform -rotate-90"
       >
         {/* Background circle */}
         <circle
@@ -65,7 +44,7 @@ export function CircularProgress({
           stroke="currentColor"
           strokeWidth={strokeWidth}
           fill="none"
-          className={colorScheme.track}
+          className="text-muted-foreground/20"
         />
         {/* Progress circle */}
         <circle
@@ -79,12 +58,14 @@ export function CircularProgress({
           strokeDashoffset={strokeDashoffset}
           strokeLinecap="round"
           className={cn(
-            colorScheme.progress,
-            'transition-all duration-500 ease-out',
-            isRunning && 'animate-pulse'
+            strokeColor,
+            'transition-all duration-300 ease-out',
+            isRunning && 'animate-pulse',
+            isCompleted && 'stroke-primary'
           )}
         />
       </svg>
+      {/* Content */}
       <div className="absolute inset-0 flex items-center justify-center">
         {children}
       </div>

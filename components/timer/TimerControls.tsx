@@ -36,13 +36,7 @@ export function TimerControls({
   };
 
   const getPlayButtonStyle = () => {
-    if (isCompleted) {
-      return 'bg-green-500 text-white';
-    }
-    if (isRunning) {
-      return 'bg-orange-500 text-white';
-    }
-    return 'bg-orange-500 text-white';
+    return 'bg-primary text-primary-foreground hover:bg-primary/90';
   };
 
   return (
@@ -54,11 +48,11 @@ export function TimerControls({
         className={cn(
           'w-16 h-16 rounded-full border-2 transition-all duration-300',
           'hover:scale-110 active:scale-95',
-          'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 hover:border-zinc-600',
+          'bg-secondary border-secondary-foreground/20 hover:bg-secondary/80',
           'disabled:opacity-50 disabled:cursor-not-allowed'
         )}
       >
-        <PiStopFill className="w-6 h-6 text-zinc-400" />
+        <PiStopFill className="w-6 h-6 text-secondary-foreground" />
       </Button>
 
       <Button
@@ -86,11 +80,11 @@ export function TimerControls({
         className={cn(
           'w-16 h-16 rounded-full border-2 transition-all duration-300',
           'hover:scale-110 active:scale-95',
-          'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 hover:border-zinc-600',
+          'bg-secondary border-secondary-foreground/20 hover:bg-secondary/80',
           'disabled:opacity-50 disabled:cursor-not-allowed'
         )}
       >
-        <PiArrowCounterClockwiseFill className="w-6 h-6 text-zinc-400" />
+        <PiArrowCounterClockwiseFill className="w-6 h-6 text-secondary-foreground" />
       </Button>
     </div>
   );

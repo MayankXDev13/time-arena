@@ -1,9 +1,11 @@
 export interface Session {
   id: string;
   userId: string;
+  categoryId?: string;
   start: Date;
   endedAt: Date | null;
   duration: number;
+  mode: "work" | "break";
   createdAt: Date;
 }
 

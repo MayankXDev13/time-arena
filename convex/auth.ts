@@ -8,48 +8,36 @@ import authConfig from "./auth.config";
 
 const siteUrl = process.env.SITE_URL!;
 
-const githubClientId = process.env.GITHUB_CLIENT_ID;
-const githubClientSecret = process.env.GITHUB_CLIENT_SECRET;
-const googleClientId = process.env.GOOGLE_CLIENT_ID;
-const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
-
-const isValidOAuthConfig = (clientId: string | undefined, clientSecret: string | undefined) => {
-  return clientId && 
-         clientSecret && 
-         clientId !== "your_github_client_id" && 
-         clientId !== "your_google_client_id" &&
-         clientId.length > 10;
-};
 
 export const authComponent = createClient<DataModel>(components.betterAuth);
 
 export const createAuth = (ctx: GenericCtx<DataModel>) => {
-  const authOptions: any = {
+  return betterAuth({
     baseURL: siteUrl,
     database: authComponent.adapter(ctx),
+
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: false,
     },
-    plugins: [convex({ authConfig })],
-  };
+    socialProviders: {
+      google: {
+        enabled: true,
+        clientId: process.env.GOOGLE_CLIENT_ID!,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      },
+      github: {
+        enabled: true,
+        clientId: process.env.GITHUB_CLIENT_ID!,
+        clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+      },
 
-  if (isValidOAuthConfig(githubClientId, githubClientSecret)) {
-    authOptions.github = {
-      clientId: githubClientId!,
-      clientSecret: githubClientSecret!,
-    };
-  }
-
-  if (isValidOAuthConfig(googleClientId, googleClientSecret)) {
-    authOptions.google = {
-      clientId: googleClientId!,
-      clientSecret: googleClientSecret!,
-    };
-  }
-
-  return betterAuth(authOptions);
-};
+    },
+    plugins: [
+      convex({ authConfig }),
+    ],
+  })
+}
 
 export const getCurrentUser = query({
   args: {},
