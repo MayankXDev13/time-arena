@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,6 +20,40 @@ export default function CategoriesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editColor, setEditColor] = useState("");
+
+  const [defaultsCreated, setDefaultsCreated] = useState(false);
+
+
+  useEffect(() => {
+    if (!user?.id) return;
+    if (categories === undefined) return;
+    if (categories.length > 0) return;
+    if (defaultsCreated) return;
+
+    const createDefaults = async () => {
+      try {
+        const defaults = [
+          { name: "Other", color: "bg-gray-500" },
+          { name: "Work", color: "bg-blue-500" },
+          { name: "Study", color: "bg-green-500" },
+        ];
+
+        for (const cat of defaults) {
+          await createCategory({
+            userId: user.id as any,
+            name: cat.name,
+            color: cat.color,
+          });
+        }
+
+        setDefaultsCreated(true);
+      } catch (err) {
+        console.error("Failed to create default categories:", err);
+      }
+    };
+
+    createDefaults();
+  }, [user?.id, categories, defaultsCreated, createCategory]);
 
   const handleCreate = async () => {
     if (!user?.id || !newCategoryName.trim()) return;
