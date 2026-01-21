@@ -12,7 +12,7 @@ import { AccountInfo } from "@/components/profile/AccountInfo";
 import { Preferences } from "@/components/profile/Preferences";
 import { CategoryQuickAccess } from "@/components/profile/CategoryQuickAccess";
 import { SessionHistory } from "@/components/profile/SessionHistory";
-import { ContributionGraph } from "@/components/profile/ContributionGraph";
+import { FocusHeatmap } from "@/components/focus/FocusHeatmap";
 import { Achievements } from "@/components/profile/Achievements";
 import { ProfileSkeleton } from "@/components/profile/ProfileSkeleton";
 
@@ -20,13 +20,14 @@ export default function ProfilePage() {
   const { user, isAuthenticated } = useAuth();
   const { isOpen } = useSidebarStore();
   const [activeTab, setActiveTab] = useState("overview");
+  const [contributionDays, setContributionDays] = useState(365);
   
   useThemeSync();
 
   const stats = useQuery(api.sessions.getStats, user?.id ? { userId: user.id as any } : "skip");
   const contribution = useQuery(
     api.sessions.getContributionGraph,
-    user?.id ? { userId: user.id, days: 365 } : "skip"
+    user?.id ? { userId: user.id, days: contributionDays } : "skip"
   );
   const categories = useQuery(api.categories.list, user?.id ? { userId: user.id as any } : "skip");
 
@@ -72,10 +73,11 @@ export default function ProfilePage() {
                   currentStreak: stats.currentStreak,
                 }}
               />
-              <div className="grid md:grid-cols-2 gap-6">
-                <ContributionGraph data={contribution} />
-                <CategoryQuickAccess categories={categories} stats={stats.categoryStats} />
-              </div>
+              <FocusHeatmap
+                data={contribution || []}
+                onFilterChange={setContributionDays}
+              />
+              <CategoryQuickAccess categories={categories} stats={stats.categoryStats} />
             </div>
           </TabsContent>
 
