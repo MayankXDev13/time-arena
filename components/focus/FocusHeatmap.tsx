@@ -27,7 +27,7 @@ import {
 import { formatTime } from "@/lib/constants";
 
 interface HeatmapData {
-  date: string; 
+  date: string; // "yyyy-MM-dd"
   minutes: number;
   sessions: number;
 }
@@ -36,7 +36,6 @@ interface FocusHeatmapProps {
   data: HeatmapData[];
   onYearChange?: (year: number) => void;
 }
-
 
 const INTENSITY_COLORS = [
   "bg-muted/40 border border-border/60",
@@ -67,13 +66,12 @@ function formatMinutes(minutes: number): string {
   return formatTime(minutes);
 }
 
-
+// ✅ Monday-first mapping
 const GITHUB_DAY_LABELS = [
-  { day: 1, label: "Mon" },
-  { day: 3, label: "Wed" },
-  { day: 5, label: "Fri" },
+  { row: 0, label: "Mon" },
+  { row: 2, label: "Wed" },
+  { row: 4, label: "Fri" },
 ];
-
 
 const TILE = 11;
 const GAP = 3;
@@ -93,13 +91,12 @@ export function FocusHeatmap({ data, onYearChange }: FocusHeatmapProps) {
     const yearStart = startOfYear(new Date(selectedYear, 0, 1));
     const yearEnd = endOfYear(new Date(selectedYear, 0, 1));
 
-    
-    const gridStart = startOfWeek(yearStart, { weekStartsOn: 0 }); 
-    const gridEnd = endOfWeek(yearEnd, { weekStartsOn: 0 });
+    // ✅ Monday start
+    const gridStart = startOfWeek(yearStart, { weekStartsOn: 1 });
+    const gridEnd = endOfWeek(yearEnd, { weekStartsOn: 1 });
 
     const allDays = eachDayOfInterval({ start: gridStart, end: gridEnd });
 
-    
     const dataMap = new Map<string, HeatmapData>();
     for (const d of data) dataMap.set(d.date, d);
 
@@ -107,8 +104,10 @@ export function FocusHeatmap({ data, onYearChange }: FocusHeatmapProps) {
 
     const weeks: HeatmapData[][] = Array.from({ length: weekCount }, (_, w) => {
       const weekStart = addDays(gridStart, w * 7);
-      return Array.from({ length: 7 }, (_, dayIndex) => {
-        const date = addDays(weekStart, dayIndex);
+
+      // ✅ rows = Mon..Sun
+      return Array.from({ length: 7 }, (_, row) => {
+        const date = addDays(weekStart, row);
         const dateStr = format(date, "yyyy-MM-dd");
 
         return (
@@ -121,18 +120,26 @@ export function FocusHeatmap({ data, onYearChange }: FocusHeatmapProps) {
       });
     });
 
-    
+    // ✅ month markers (first in-year day in each week)
     const monthLabels: { index: number; label: string }[] = [];
     let lastMonth = -1;
 
     for (let w = 0; w < weeks.length; w++) {
-      const firstDayOfWeek = weeks[w][0]; 
-      const m = getMonth(new Date(firstDayOfWeek.date));
+      const week = weeks[w];
+
+      const firstInYear = week.find((d) => {
+        const dt = new Date(d.date);
+        return dt.getFullYear() === selectedYear;
+      });
+
+      if (!firstInYear) continue;
+
+      const m = getMonth(new Date(firstInYear.date));
       if (m !== lastMonth) {
         lastMonth = m;
         monthLabels.push({
           index: w,
-          label: format(new Date(firstDayOfWeek.date), "MMM"),
+          label: format(new Date(firstInYear.date), "MMM"),
         });
       }
     }
@@ -147,6 +154,9 @@ export function FocusHeatmap({ data, onYearChange }: FocusHeatmapProps) {
     return { weeks, monthLabels, totalMinutes, totalSessions };
   }, [data, selectedYear]);
 
+  const gridHeight = 7 * TILE + 6 * GAP;
+  const gridWidth = weeks.length * (TILE + GAP);
+
   return (
     <Card className="w-full">
       <CardHeader className="pb-3">
@@ -154,7 +164,8 @@ export function FocusHeatmap({ data, onYearChange }: FocusHeatmapProps) {
           <div>
             <CardTitle className="text-base">Focus Activity</CardTitle>
             <CardDescription className="text-xs">
-              {totalSessions} sessions • {formatTime(totalMinutes)} in {selectedYear}
+              {totalSessions} sessions • {formatTime(totalMinutes)} in{" "}
+              {selectedYear}
             </CardDescription>
           </div>
 
@@ -176,55 +187,54 @@ export function FocusHeatmap({ data, onYearChange }: FocusHeatmapProps) {
 
       <CardContent>
         <Tooltip.Provider delayDuration={120}>
-        
           <div className="overflow-x-auto heatmap-scroll">
-         
-            <div className="inline-flex w-fit">
-             
-              <div className="relative pr-2 pt-6">
+            {/* ✅ wrapper */}
+            <div className="inline-flex w-fit flex-col">
+              {/* ✅ Month labels row (aligned with grid) */}
+              <div className="flex">
+                {/* left spacer same width as day labels */}
+                <div className="w-10" />
+
                 <div
-                  className="w-8"
+                  className="relative h-4"
                   style={{
-                    height: `calc(7*${TILE}px + 6*${GAP}px)`,
+                    width: gridWidth,
                   }}
                 >
-                  {GITHUB_DAY_LABELS.map((d) => (
-                    <div
-                      key={d.day}
-                      className="absolute left-2 my-5 text-[10px] text-muted-foreground"
+                  {monthLabels.map((m) => (
+                    <span
+                      key={m.index}
+                      className="absolute text-[10px] text-muted-foreground"
                       style={{
-                        top: d.day * (TILE + GAP),
+                        left: m.index * (TILE + GAP),
                       }}
                     >
-                      {d.label}
-                    </div>
+                      {m.label}
+                    </span>
                   ))}
                 </div>
               </div>
 
-              <div>
-              
-                <div
-                  className="mb-2 flex"
-                  style={{
-                    gap: `${GAP}px`,
-                  }}
-                >
-                  {weeks.map((_, weekIndex) => {
-                    const month = monthLabels.find((m) => m.index === weekIndex);
-                    return (
+              {/* ✅ Day labels + Grid */}
+              <div className="flex">
+                {/* day labels */}
+                <div className="relative w-10">
+                  <div style={{ height: gridHeight }}>
+                    {GITHUB_DAY_LABELS.map((d) => (
                       <div
-                        key={weekIndex}
-                        className="text-[10px] text-muted-foreground"
-                        style={{ width: TILE }}
+                        key={d.row}
+                        className="absolute left-0 text-[10px] text-muted-foreground"
+                        style={{
+                          top: d.row * (TILE + GAP) - 1,
+                        }}
                       >
-                        {month?.label ?? ""}
+                        {d.label}
                       </div>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
 
-            
+                {/* heatmap */}
                 <div className="flex" style={{ gap: `${GAP}px` }}>
                   {weeks.map((week, weekIndex) => (
                     <div
@@ -232,11 +242,11 @@ export function FocusHeatmap({ data, onYearChange }: FocusHeatmapProps) {
                       className="flex flex-col"
                       style={{ gap: `${GAP}px` }}
                     >
-                      {week.map((cell, dayIndex) => {
+                      {week.map((cell, rowIndex) => {
                         const intensity = getIntensity(cell.minutes);
 
                         return (
-                          <Tooltip.Root key={`${weekIndex}-${dayIndex}`}>
+                          <Tooltip.Root key={`${weekIndex}-${rowIndex}`}>
                             <Tooltip.Trigger asChild>
                               <button
                                 className={cn(
@@ -268,7 +278,8 @@ export function FocusHeatmap({ data, onYearChange }: FocusHeatmapProps) {
                                   </div>
 
                                   <div className="text-[11px] text-muted-foreground">
-                                    {formatMinutes(cell.minutes)} • {cell.sessions} session
+                                    {formatMinutes(cell.minutes)} •{" "}
+                                    {cell.sessions} session
                                     {cell.sessions !== 1 ? "s" : ""}
                                   </div>
                                 </div>
@@ -285,7 +296,7 @@ export function FocusHeatmap({ data, onYearChange }: FocusHeatmapProps) {
             </div>
           </div>
 
-      
+          {/* Legend */}
           <div className="mt-4 flex items-center justify-end gap-2 border-t pt-3">
             <span className="text-[11px] text-muted-foreground">Less</span>
             {INTENSITY_COLORS.map((c, i) => (
@@ -299,7 +310,6 @@ export function FocusHeatmap({ data, onYearChange }: FocusHeatmapProps) {
           </div>
         </Tooltip.Provider>
 
-      
         <style jsx global>{`
           .heatmap-scroll::-webkit-scrollbar {
             height: 0px;
