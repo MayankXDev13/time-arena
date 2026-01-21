@@ -111,3 +111,13 @@ export const endSession = mutation({
     });
   },
 });
+
+export const remove = mutation({
+  args: { id: v.id("sessions") },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db.get(args.id);
+    if (!existing) return; 
+
+    await ctx.db.delete(args.id);
+  },
+});

@@ -6,13 +6,14 @@ import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { CategoryDropdown } from "@/components/CategoryDropdown";
-import { Edit2, Save, X } from "lucide-react";
+import { Edit2, Save, X, Trash2 } from "lucide-react";
 
 export default function StatsPage() {
   const { user } = useAuth();
   const sessions = useQuery(api.sessions.getRecent, user?.id ? { userId: user.id as any, limit: 50 } : "skip");
   const categories = useQuery(api.categories.list, user?.id ? { userId: user.id as any } : "skip");
   const updateSession = useMutation(api.sessions.update);
+  const deleteSession = useMutation(api.sessions.remove);
   const stats = useQuery(api.sessions.getStats, user?.id ? { userId: user.id as any } : "skip");
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -120,9 +121,14 @@ export default function StatsPage() {
                         {getCategoryName(session.categoryId)}
                       </span>
                     </div>
-                    <Button size="sm" variant="outline" onClick={() => handleEdit(session)}>
-                      <Edit2 className="w-4 h-4" />
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => handleEdit(session)}>
+                        <Edit2 className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => deleteSession({ id: session._id as any })}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
