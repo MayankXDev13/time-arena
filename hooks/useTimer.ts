@@ -24,6 +24,7 @@ export function useTimer() {
   } = useTimerStore();
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const elapsedRef = useRef(0);
   const notifiedRef = useRef(false);
   const startTimeRef = useRef<number>(0);
   const { user } = useAuth();
@@ -70,6 +71,8 @@ export function useTimer() {
 
     intervalRef.current = setInterval(() => {
       const currentActualElapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+      if (currentActualElapsed === elapsedRef.current) return;
+      elapsedRef.current = currentActualElapsed;
       const completed = currentActualElapsed >= targetDuration;
 
       checkCompletion(currentActualElapsed);
@@ -86,7 +89,7 @@ export function useTimer() {
         clearIntervalRef();
         setTimer({ isRunning: false });
       }
-    }, 100);
+    }, 500);
 
     requestNotificationPermission();
   }, [user?.id, selectedCategoryId, mode, createSessionMutation, setTimer, clearIntervalRef, checkCompletion, targetDuration]);
@@ -100,9 +103,12 @@ export function useTimer() {
     if (!isRunning && (sessionId || actualElapsed > 0)) {
       notifiedRef.current = false;
       startTimeRef.current = Date.now() - actualElapsed * 1000;
+      elapsedRef.current = actualElapsed;
 
-      intervalRef.current = setInterval(() => {
+       intervalRef.current = setInterval(() => {
         const currentActualElapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+        if (currentActualElapsed === elapsedRef.current) return;
+        elapsedRef.current = currentActualElapsed;
         const completed = currentActualElapsed >= targetDuration;
 
         checkCompletion(currentActualElapsed);
@@ -118,7 +124,7 @@ export function useTimer() {
           clearIntervalRef();
           setTimer({ isRunning: false });
         }
-      }, 100);
+      }, 500);
 
       requestNotificationPermission();
     }

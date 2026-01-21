@@ -24,6 +24,7 @@ export function useProfile() {
       autoStartBreaks?: boolean;
       soundEnabled?: boolean;
       defaultTimerMinutes?: number;
+      breakDurationMinutes?: number;
       theme?: string;
     }) => {
       if (!user?.id) return;

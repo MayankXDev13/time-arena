@@ -15,6 +15,7 @@ export const getSettings = query({
         autoStartBreaks: true,
         soundEnabled: true,
         defaultTimerMinutes: 25,
+        breakDurationMinutes: 5,
         theme: "system",
       };
     }
@@ -30,6 +31,7 @@ export const updateSettings = mutation({
     autoStartBreaks: v.optional(v.boolean()),
     soundEnabled: v.optional(v.boolean()),
     defaultTimerMinutes: v.optional(v.number()),
+    breakDurationMinutes: v.optional(v.number()),
     theme: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -49,6 +51,7 @@ export const updateSettings = mutation({
         autoStartBreaks: updates.autoStartBreaks ?? true,
         soundEnabled: updates.soundEnabled ?? true,
         defaultTimerMinutes: updates.defaultTimerMinutes ?? 25,
+        breakDurationMinutes: updates.breakDurationMinutes ?? 5,
         theme: updates.theme ?? "system",
       });
     }
@@ -77,6 +80,7 @@ export const getProfile = query({
         autoStartBreaks: true,
         soundEnabled: true,
         defaultTimerMinutes: 25,
+        breakDurationMinutes: 5,
         theme: "system",
       },
     };

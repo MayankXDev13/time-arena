@@ -26,6 +26,7 @@ export default defineSchema({
     autoStartBreaks: v.optional(v.boolean()),
     soundEnabled: v.optional(v.boolean()),
     defaultTimerMinutes: v.optional(v.number()),
+    breakDurationMinutes: v.optional(v.number()),
     theme: v.optional(v.string()),
   })
     .index("by_user", ["userId"]),

@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import { useProfile } from "@/hooks/useProfile";
 import { useThemeStore } from "@/stores/useThemeStore";
+import { useTimerStore } from "@/stores/useTimerStore";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -10,6 +12,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export function Preferences() {
   const { settings, updateSettings, isLoading } = useProfile();
   const { setTheme } = useThemeStore();
+  const { setBreakDuration } = useTimerStore();
+
+  useEffect(() => {
+    if (settings?.breakDurationMinutes) {
+      setBreakDuration(settings.breakDurationMinutes);
+    }
+  }, [settings?.breakDurationMinutes, setBreakDuration]);
 
   if (isLoading || !settings) {
     return (
@@ -56,18 +65,18 @@ export function Preferences() {
             </p>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Streak Threshold (minutes/day)</label>
+            <label className="text-sm font-medium">Break Duration (minutes)</label>
             <Input
               type="number"
               min={1}
-              max={60}
-              value={settings.streakThresholdMinutes}
+              max={30}
+              value={settings.breakDurationMinutes ?? 5}
               onChange={(e) =>
-                updateSettings({ streakThresholdMinutes: parseInt(e.target.value) || 15 })
+                updateSettings({ breakDurationMinutes: parseInt(e.target.value) || 5 })
               }
             />
             <p className="text-xs text-muted-foreground">
-              Minimum minutes to qualify for streak (1-60 min)
+              Duration for break sessions (1-30 min)
             </p>
           </div>
         </div>
