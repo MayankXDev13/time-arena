@@ -57,15 +57,6 @@ export function CategoryDropdown({ selectedCategoryId, onSelect, className }: Ca
 
       {isOpen && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-lg z-10 max-h-48 overflow-y-auto">
-          {/* Uncategorized option */}
-          <button
-            onClick={() => handleSelect(undefined)}
-            className="w-full px-3 py-2 text-left hover:bg-accent flex items-center space-x-2"
-          >
-            <div className="w-3 h-3 rounded-full bg-gray-400" />
-            <span>Uncategorized</span>
-            {!selectedCategoryId && <Check className="w-4 h-4 ml-auto" />}
-          </button>
 
           {/* Categories */}
           {categories?.map((category: any) => (
