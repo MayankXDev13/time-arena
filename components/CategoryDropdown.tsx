@@ -92,5 +92,5 @@ export function CategoryDropdown({ selectedCategoryId, onSelect, className }: Ca
   );
 }
 
-// Export colors for use in other components
+
 export { TAILWIND_COLORS };

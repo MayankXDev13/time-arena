@@ -40,7 +40,7 @@ export function TimerControls({
   };
 
   return (
-    <div className="flex items-center justify-center gap-6 mt-12">
+    <div className="flex items-center justify-center gap-6">
       <Button
         onClick={stop}
         disabled={!isRunning && elapsed === 0 && !isCompleted}

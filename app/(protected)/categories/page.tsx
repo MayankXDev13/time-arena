@@ -61,7 +61,6 @@ export default function CategoriesPage() {
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         <h1 className="text-2xl font-bold text-foreground mb-8">Categories</h1>
 
-        {/* Create New Category */}
         <div className="bg-card p-6 rounded-lg border border-border mb-8">
           <h2 className="text-lg font-semibold text-card-foreground mb-4">Create New Category</h2>
           <div className="flex gap-4">

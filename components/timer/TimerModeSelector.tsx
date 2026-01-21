@@ -37,7 +37,7 @@ export function TimerModeSelector() {
   ];
 
   return (
-    <div className="flex items-center justify-center gap-3 mb-8">
+    <div className="flex items-center justify-center gap-3">
       {modes.map((m) => {
         const Icon = m.icon;
         const isActive = mode === m.key;

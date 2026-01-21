@@ -54,7 +54,7 @@ export default function StatsPage() {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <h1 className="text-2xl font-bold text-foreground mb-8">Statistics</h1>
 
-        {/* Stats Overview */}
+       
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <div className="bg-card p-6 rounded-lg border border-border">
             <h3 className="text-lg font-semibold text-card-foreground mb-2">Today's Focus</h3>
@@ -70,7 +70,6 @@ export default function StatsPage() {
           </div>
         </div>
 
-        {/* Sessions List */}
         <div className="bg-card rounded-lg border border-border">
           <div className="p-6 border-b border-border">
             <h2 className="text-lg font-semibold text-card-foreground">Recent Sessions</h2>
