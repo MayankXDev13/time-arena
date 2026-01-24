@@ -1,4 +1,3 @@
-
 import { formatTime } from '@/utils/helpers';
 import { cn } from '@/lib/utils';
 import type { TimerMode } from '@/stores/useTimerStore';
@@ -39,9 +38,9 @@ export function TimerDisplay({
             className={cn(
               'text-6xl md:text-8xl font-mono font-bold tabular-nums tracking-tight',
               'transition-all duration-300',
-               isRunning && 'animate-pulse',
-               mode === 'work' ? 'text-primary' : 'text-secondary-foreground',
-               isCompleted && 'text-primary'
+              isRunning && 'animate-pulse',
+              mode === 'work' ? 'text-primary' : 'text-secondary-foreground',
+              isCompleted && 'text-primary'
             )}
           >
             {isCompleted ? formatTime(targetDuration) : formatTime(elapsed)}
@@ -49,31 +48,23 @@ export function TimerDisplay({
         </div>
       </CircularProgress>
 
-      {isCompleted && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="text-center">
-             <div className="text-4xl md:text-6xl font-mono font-bold text-primary animate-pulse">
-               00:00
-             </div>
-          </div>
-        </div>
-      )}
-
       <div className="mt-8 text-center">
         <div className="text-sm text-muted-foreground">
-           {isCompleted ? (
-             <span className="text-primary font-medium">Session Complete!</span>
-           ) : (
-             <>
-               {mode === 'work' ? 'Focus time' : 'Break time'} • {Math.floor(elapsed / 60)} min elapsed
-             </>
-           )}
-         </div>
-         {isCompleted && (
-           <div className="mt-2 text-xs text-muted-foreground">
-             Tap reset to start a new session
-           </div>
-         )}
+          {isCompleted ? (
+            <span className="text-primary font-medium">Session Complete!</span>
+          ) : (
+            <>
+              {mode === 'work' ? 'Focus time' : 'Break time'} •{' '}
+              {Math.floor(elapsed / 60)} min elapsed
+            </>
+          )}
+        </div>
+
+        {isCompleted && (
+          <div className="mt-2 text-xs text-muted-foreground">
+            Tap reset to start a new session
+          </div>
+        )}
       </div>
     </div>
   );
