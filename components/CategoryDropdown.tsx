@@ -36,10 +36,14 @@ export function CategoryDropdown({
     user?.id ? { userId: user.id as any } : "skip"
   );
 
-  // ✅ AUTO SELECT DEFAULT CATEGORY
+
   useEffect(() => {
-    if (!selectedCategoryId && categories && categories.length > 0) {
-      onSelect(categories[0]._id); // first category auto select
+    if (!selectedCategoryId && categories?.length) {
+      const otherCategory = categories.find(
+        (c: any) => c.name?.toLowerCase() === "other"
+      );
+
+      onSelect(otherCategory?._id ?? categories[0]._id);
     }
   }, [selectedCategoryId, categories, onSelect]);
 
@@ -53,10 +57,11 @@ export function CategoryDropdown({
   };
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative ${className ?? ""}`}>
       <Button
         variant="outline"
-        onClick={() => setIsOpen(!isOpen)}
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
         className="w-full justify-between bg-card hover:bg-accent"
       >
         <div className="flex items-center space-x-2">
@@ -74,14 +79,27 @@ export function CategoryDropdown({
 
       {isOpen && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-lg z-10 max-h-48 overflow-y-auto">
+          
+
+          <button
+            type="button"
+            onClick={() => handleSelect(undefined)}
+            className="w-full px-3 py-2 text-left hover:bg-accent text-muted-foreground"
+          >
+            Select category
+          </button>
+
+    
           {categories?.map((category: any) => (
             <button
               key={category._id}
+              type="button"
               onClick={() => handleSelect(category._id)}
               className="w-full px-3 py-2 text-left hover:bg-accent flex items-center space-x-2"
             >
               <div className={`w-3 h-3 rounded-full ${category.color}`} />
               <span>{category.name}</span>
+
               {selectedCategoryId === category._id && (
                 <Check className="w-4 h-4 ml-auto" />
               )}
