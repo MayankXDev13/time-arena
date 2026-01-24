@@ -41,29 +41,32 @@ interface AuthState {
 export function useAuth(): AuthState {
   const { data: session, isPending: loading } = authClient.useSession();
 
-  const signInWithEmail = async (email: string, password: string): Promise<AuthError> => {
+  const signInWithEmail = async (
+    email: string,
+    password: string,
+  ): Promise<AuthError> => {
     try {
       const result = await authClient.signIn.email({
         email,
         password,
       });
-      
+
       if (result.error) {
         return { error: new Error(result.error.message) };
       }
-      
+
       return { error: null };
     } catch (err) {
-      return { 
-        error: err instanceof Error ? err : new Error('Sign in failed') 
+      return {
+        error: err instanceof Error ? err : new Error("Sign in failed"),
       };
     }
   };
 
   const signUpWithEmail = async (
-    name: string, 
-    email: string, 
-    password: string
+    name: string,
+    email: string,
+    password: string,
   ): Promise<AuthError> => {
     try {
       const result = await authClient.signUp.email({
@@ -71,34 +74,37 @@ export function useAuth(): AuthState {
         password,
         name,
       });
-      
+
       if (result.error) {
         return { error: new Error(result.error.message) };
       }
-      
+
       return { error: null };
     } catch (err) {
-      return { 
-        error: err instanceof Error ? err : new Error('Sign up failed') 
+      return {
+        error: err instanceof Error ? err : new Error("Sign up failed"),
       };
     }
   };
+
+  const APP_URL =
+  process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   const signInWithGitHub = async (): Promise<AuthError> => {
     try {
       const result = await authClient.signIn.social({
         provider: "github",
-        callbackURL: "/dashboard", // Redirect to dashboard after login
+        callbackURL: `${APP_URL}/dashboard`, // Redirect to dashboard after login
       });
-      
+
       if (result?.error) {
         return { error: new Error(result.error.message) };
       }
-      
+
       return { error: null };
     } catch (err) {
-      return { 
-        error: err instanceof Error ? err : new Error('GitHub sign in failed') 
+      return {
+        error: err instanceof Error ? err : new Error("GitHub sign in failed"),
       };
     }
   };
@@ -107,17 +113,17 @@ export function useAuth(): AuthState {
     try {
       const result = await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/dashboard", // Redirect to dashboard after login
+        callbackURL: `${APP_URL}/dashboard`, // Redirect to dashboard after login
       });
-      
+
       if (result?.error) {
         return { error: new Error(result.error.message) };
       }
-      
+
       return { error: null };
     } catch (err) {
-      return { 
-        error: err instanceof Error ? err : new Error('Google sign in failed') 
+      return {
+        error: err instanceof Error ? err : new Error("Google sign in failed"),
       };
     }
   };
@@ -128,23 +134,25 @@ export function useAuth(): AuthState {
         fetchOptions: {
           onSuccess: () => {
             // Optional: redirect to home page
-            window.location.href = '/';
-          }
-        }
+            window.location.href = "/";
+          },
+        },
       });
     } catch (err) {
-      console.error('Sign out error:', err);
+      console.error("Sign out error:", err);
       // Force redirect even if sign out fails
-      window.location.href = '/';
+      window.location.href = "/";
     }
   };
 
   return {
     user: session?.user ?? null,
-    session: session ? {
-      user: session.user,
-      session: session.session,
-    } : null,
+    session: session
+      ? {
+          user: session.user,
+          session: session.session,
+        }
+      : null,
     loading,
     isAuthenticated: !!session?.user,
     signIn: signInWithEmail,
@@ -154,4 +162,3 @@ export function useAuth(): AuthState {
     signOut: handleSignOut,
   };
 }
-
