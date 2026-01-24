@@ -116,7 +116,7 @@ export function CategoryStatsCard({
         <div className="flex items-center gap-2.5 min-w-0">
           <div
             className={cn(
-              "w-3 h-3 rounded-full flex-shrink-0 shadow-sm",
+              "w-3 h-3 rounded-full shrink-0 shadow-sm",
               category.color
             )}
           />
