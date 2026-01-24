@@ -53,7 +53,8 @@ export function TimerDisplay({
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center">
              <div className="text-4xl md:text-6xl font-mono font-bold text-primary animate-pulse">
-               {/* {targetDuration}  */}
+              {/* why I comment it when the time of is complete this showing two times complete time and backe is 00:00 */}
+               {/* 00:00 */}
              </div>
           </div>
         </div>
