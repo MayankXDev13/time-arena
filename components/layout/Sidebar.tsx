@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useSidebarStore } from "@/stores/useSidebarStore";
-import { Clock, BarChart3, User, Folder, LogOut, ChevronLeft } from "lucide-react";
+import { Clock, BarChart3, User, Folder, LogOut, ChevronLeft, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DarkModeToggle } from "@/components/DarkModeToggle";
 
@@ -16,8 +16,9 @@ export function Sidebar() {
   const navItems = [
     { href: "/", label: "Timer", icon: Clock },
     { href: "/categories", label: "Categories", icon: Folder },
-    { href: "/profile", label: "Profile", icon: User },
+    { href: "/sessions", label: "Sessions", icon: History },
     { href: "/stats", label: "Stats", icon: BarChart3 },
+    { href: "/profile", label: "Profile", icon: User },
   ];
 
   return (

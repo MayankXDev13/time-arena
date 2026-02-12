@@ -10,6 +10,7 @@ interface CategoryDropdownProps {
   selectedCategoryId?: string;
   onSelect: (categoryId?: string) => void;
   className?: string;
+  autoSelectDefault?: boolean;
 }
 
 const COLOR_OPTIONS = [
@@ -27,6 +28,7 @@ export function CategoryDropdown({
   selectedCategoryId,
   onSelect,
   className,
+  autoSelectDefault = true,
 }: CategoryDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
@@ -38,14 +40,14 @@ export function CategoryDropdown({
 
 
   useEffect(() => {
-    if (!selectedCategoryId && categories?.length) {
+    if (autoSelectDefault && !selectedCategoryId && categories?.length) {
       const otherCategory = categories.find(
         (c: any) => c.name?.toLowerCase() === "other"
       );
 
       onSelect(otherCategory?._id ?? categories[0]._id);
     }
-  }, [selectedCategoryId, categories, onSelect]);
+  }, [autoSelectDefault, selectedCategoryId, categories, onSelect]);
 
   const selectedCategory = categories?.find(
     (cat: any) => cat._id === selectedCategoryId
