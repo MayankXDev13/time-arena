@@ -188,11 +188,16 @@ export const update = mutation({
   args: {
     id: v.id("sessions"),
     categoryId: v.optional(v.id("categories")),
+    duration: v.optional(v.number()),
+    mode: v.optional(v.union(v.literal("work"), v.literal("break"))),
   },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.id, {
-      categoryId: args.categoryId,
-    });
+    const updates: any = {};
+    if (args.categoryId !== undefined) updates.categoryId = args.categoryId;
+    if (args.duration !== undefined) updates.duration = args.duration;
+    if (args.mode !== undefined) updates.mode = args.mode;
+    
+    await ctx.db.patch(args.id, updates);
   },
 });
 
