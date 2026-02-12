@@ -10,7 +10,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { AccountInfo } from "@/components/profile/AccountInfo";
 import { Preferences } from "@/components/profile/Preferences";
-import { SessionHistory } from "@/components/profile/SessionHistory";
 import { FocusHeatmap } from "@/components/focus/FocusHeatmap";
 import { Achievements } from "@/components/profile/Achievements";
 import { ProfileSkeleton } from "@/components/profile/ProfileSkeleton";
@@ -54,11 +53,10 @@ export default function ProfilePage() {
         <h1 className="text-2xl font-bold text-foreground mb-8">Profile</h1>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6 grid grid-cols-5 w-full max-w-md">
+          <TabsList className="mb-6 grid grid-cols-4 w-full max-w-md">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="account">Account</TabsTrigger>
             <TabsTrigger value="preferences">Settings</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
             <TabsTrigger value="achievements">Badges</TabsTrigger>
           </TabsList>
 
@@ -84,10 +82,6 @@ export default function ProfilePage() {
 
           <TabsContent value="preferences">
             <Preferences />
-          </TabsContent>
-
-          <TabsContent value="history">
-            <SessionHistory />
           </TabsContent>
 
           <TabsContent value="achievements">
