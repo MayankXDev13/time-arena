@@ -155,9 +155,21 @@ export function useTimer() {
     });
   }, [sessionId, actualElapsed, endSessionMutation, setTimer, clearIntervalRef]);
 
-  const reset = useCallback(() => {
+  const reset = useCallback(async () => {
     clearIntervalRef();
     notifiedRef.current = false;
+
+    // Save current session if it exists and has elapsed time
+    if (sessionId && actualElapsed > 0) {
+      const endTime = Date.now();
+      await endSessionMutation({
+        id: sessionId as any,
+        endedAt: endTime,
+        duration: actualElapsed,
+      });
+    }
+
+    // Reset state
     setTimer({
       isRunning: false,
       elapsed: 0,
@@ -166,7 +178,10 @@ export function useTimer() {
       lastStartTime: null,
       isCompleted: false,
     });
-  }, [setTimer, clearIntervalRef]);
+
+    // Start new session with same category
+    await start();
+  }, [setTimer, clearIntervalRef, sessionId, actualElapsed, endSessionMutation, start]);
 
   useEffect(() => {
     return () => {
