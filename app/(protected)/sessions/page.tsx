@@ -94,9 +94,7 @@ export default function SessionsPage() {
   };
 
   const handleDelete = async (sessionId: string) => {
-    if (confirm("Are you sure you want to delete this session? This action cannot be undone.")) {
-      await deleteSession({ id: sessionId as any });
-    }
+    await deleteSession({ id: sessionId as any });
   };
 
   const handleEdit = (session: Session) => {
@@ -182,51 +180,52 @@ export default function SessionsPage() {
               />
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               {sessions?.page && sessions.page.length > 0 ? (
                 sessions.page.map((session: any) => (
                   <div 
                     key={session._id} 
-                    className="group flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                    className="group grid grid-cols-[110px_100px_100px_1fr_auto] items-center gap-4 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
                   >
-                    <div className="flex items-center gap-5 flex-1">
-                      {/* Date & Time */}
-                      <div className="flex flex-col min-w-[100px]">
-                        <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
-                          <CalendarDays className="w-3.5 h-3.5 text-muted-foreground" />
-                          {formatDate(session.start)}
-                        </div>
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-                          <Clock className="w-3 h-3" />
-                          {formatTimeOnly(session.start)}
-                        </div>
+                    {/* Date & Time */}
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-1 text-sm font-medium text-foreground">
+                        <CalendarDays className="w-3 h-3 text-muted-foreground shrink-0" />
+                        <span className="truncate">{formatDate(session.start)}</span>
                       </div>
-
-                      {/* Mode Badge */}
-                      <Badge
-                        variant={session.mode === "work" ? "default" : "secondary"}
-                        className="flex items-center gap-1 px-2.5 py-1"
-                      >
-                        {session.mode === "work" ? (
-                          <>
-                            <Focus className="w-3 h-3" />
-                            Focus
-                          </>
-                        ) : (
-                          <>
-                            <Coffee className="w-3 h-3" />
-                            Break
-                          </>
-                        )}
-                      </Badge>
-
-                      {/* Duration */}
-                      <div className="flex items-center gap-1.5 font-semibold text-foreground">
-                        <Clock className="w-4 h-4 text-muted-foreground" />
-                        {formatTime(Math.floor(session.duration / 60))}
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                        <Clock className="w-3 h-3 shrink-0" />
+                        <span>{formatTimeOnly(session.start)}</span>
                       </div>
+                    </div>
 
-                      {/* Category */}
+                    {/* Mode Badge */}
+                    <Badge
+                      variant={session.mode === "work" ? "default" : "secondary"}
+                      className="flex items-center justify-center gap-1 px-2 py-1 w-fit"
+                    >
+                      {session.mode === "work" ? (
+                        <>
+                          <Focus className="w-3 h-3" />
+                          <span className="hidden sm:inline">Focus</span>
+                          <span className="sm:hidden">Work</span>
+                        </>
+                      ) : (
+                        <>
+                          <Coffee className="w-3 h-3" />
+                          <span>Break</span>
+                        </>
+                      )}
+                    </Badge>
+
+                    {/* Duration */}
+                    <div className="flex items-center gap-1 font-semibold text-foreground text-sm">
+                      <Clock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                      {formatTime(Math.floor(session.duration / 60))}
+                    </div>
+
+                    {/* Category */}
+                    <div className="min-w-0 overflow-hidden">
                       <CategoryBadge categoryId={session.categoryId} />
                     </div>
 
@@ -277,9 +276,6 @@ export default function SessionsPage() {
                   <ChevronLeft className="w-4 h-4 mr-2" />
                   Previous
                 </Button>
-                <span className="text-sm font-medium text-muted-foreground">
-                  Page {page + 1}
-                </span>
                 <Button
                   variant="outline"
                   size="sm"
@@ -362,18 +358,34 @@ function CategoryBadge({ categoryId }: { categoryId?: string }) {
   const { user } = useAuth();
   const categories = useQuery(api.categories.list, user?.id ? { userId: user.id as any } : "skip");
 
-  if (!categoryId || !categories) return null;
+  if (!categories) return <span className="text-sm text-muted-foreground">-</span>;
+
+  if (!categoryId) {
+    return (
+      <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-muted/50 w-fit">
+        <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
+        <span className="text-sm text-muted-foreground">Uncategorized</span>
+      </div>
+    );
+  }
 
   const category = categories.find((cat: any) => cat._id === categoryId);
-  if (!category) return null;
+  if (!category) {
+    return (
+      <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-muted/50 w-fit">
+        <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
+        <span className="text-sm text-muted-foreground">Unknown</span>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted">
+    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-muted w-fit max-w-full">
       <div
-        className="w-2.5 h-2.5 rounded-full"
+        className="w-2 h-2 rounded-full shrink-0"
         style={{ backgroundColor: category.color.replace("bg-", "").replace("-500", "") }}
       />
-      <span className="text-sm font-medium">{category.name}</span>
+      <span className="text-sm font-medium truncate">{category.name}</span>
     </div>
   );
 }

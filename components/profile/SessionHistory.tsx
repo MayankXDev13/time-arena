@@ -44,9 +44,7 @@ export function SessionHistory() {
   };
 
   const handleDelete = async (sessionId: string) => {
-    if (confirm("Are you sure you want to delete this session?")) {
-      await deleteSession({ id: sessionId as any });
-    }
+    await deleteSession({ id: sessionId as any });
   };
 
   const totalPages = sessions?.totalPages ?? 1;
@@ -85,32 +83,34 @@ export function SessionHistory() {
           </Select>
         </div>
 
-        <div className="divide-y">
+        <div className="space-y-2">
           {sessions?.page && sessions.page.length > 0 ? (
             sessions.page.map((session: any) => (
-              <div key={session._id} className="flex items-center justify-between py-4">
-                <div className="flex items-center gap-4 flex-wrap">
-                  <span className="text-sm text-muted-foreground min-w-[140px]">
-                    {formatDate(session.start)}
-                  </span>
-                  <Badge
-                    variant={session.mode === "work" ? "default" : "secondary"}
-                  >
-                    {session.mode === "work" ? "Focus" : "Break"}
-                  </Badge>
-                  <span className="font-medium">{formatTime(Math.floor(session.duration / 60))}</span>
+              <div 
+                key={session._id} 
+                className="grid grid-cols-[140px_90px_80px_1fr_auto] items-center gap-4 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+              >
+                <span className="text-sm text-muted-foreground truncate">
+                  {formatDate(session.start)}
+                </span>
+                <Badge
+                  variant={session.mode === "work" ? "default" : "secondary"}
+                  className="w-fit"
+                >
+                  {session.mode === "work" ? "Focus" : "Break"}
+                </Badge>
+                <span className="font-medium text-sm">{formatTime(Math.floor(session.duration / 60))}</span>
+                <div className="min-w-0">
                   <CategoryBadge categoryId={session.categoryId} />
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(session._id)}
-                    className="text-muted-foreground hover:text-destructive"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDelete(session._id)}
+                  className="text-muted-foreground hover:text-destructive h-8 w-8"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
               </div>
             ))
           ) : (
@@ -130,9 +130,6 @@ export function SessionHistory() {
             <ChevronLeft className="w-4 h-4 mr-1" />
             Previous
           </Button>
-          <span className="text-sm text-muted-foreground">
-            Page {page + 1} of {totalPages}
-          </span>
           <Button
             variant="outline"
             size="sm"
@@ -152,18 +149,34 @@ function CategoryBadge({ categoryId }: { categoryId?: string }) {
   const { user } = useAuth();
   const categories = useQuery(api.categories.list, user?.id ? { userId: user.id as any } : "skip");
 
-  if (!categoryId || !categories) return null;
+  if (!categories) return <span className="text-sm text-muted-foreground">-</span>;
+
+  if (!categoryId) {
+    return (
+      <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-muted/50 w-fit">
+        <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
+        <span className="text-sm text-muted-foreground">Uncategorized</span>
+      </div>
+    );
+  }
 
   const category = categories.find((cat: any) => cat._id === categoryId);
-  if (!category) return null;
+  if (!category) {
+    return (
+      <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-muted/50 w-fit">
+        <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
+        <span className="text-sm text-muted-foreground">Unknown</span>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-muted w-fit max-w-full">
       <div
-        className="w-2.5 h-2.5 rounded-full"
+        className="w-2 h-2 rounded-full shrink-0"
         style={{ backgroundColor: category.color.replace("bg-", "").replace("-500", "") }}
       />
-      <span className="text-sm text-muted-foreground">{category.name}</span>
+      <span className="text-sm text-muted-foreground truncate">{category.name}</span>
     </div>
   );
 }
