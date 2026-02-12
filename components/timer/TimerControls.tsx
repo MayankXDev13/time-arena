@@ -10,7 +10,7 @@ interface TimerControlsProps {
   pause: () => void;
   resume: () => void;
   stop: () => Promise<void>;
-  reset: () => void;
+  reset: () => Promise<void>;
 }
 
 export function TimerControls({
@@ -23,13 +23,13 @@ export function TimerControls({
   stop,
   reset,
 }: TimerControlsProps) {
-  const handleStartPause = () => {
+  const handleStartPause = async () => {
     if (isCompleted) {
-      reset();
+      await reset();
     } else if (isRunning) {
       pause();
     } else if (elapsed === 0 || isCompleted) {
-      start();
+      await start();
     } else {
       resume();
     }
@@ -74,7 +74,7 @@ export function TimerControls({
       </Button>
 
       <Button
-        onClick={reset}
+        onClick={async () => await reset()}
         disabled={!isRunning && elapsed === 0 && !isCompleted}
         size="lg"
         className={cn(
