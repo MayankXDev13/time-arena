@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSidebarStore } from "@/stores/useSidebarStore";
 import { Button } from "@/components/ui/button";
 import { CategoryDropdown } from "@/components/CategoryDropdown";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { Edit2, Save, X, Trash2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { CategoryStatsCard } from "@/components/CategoryStatsCard";
@@ -139,26 +140,31 @@ export default function StatsPage() {
   }
 
   return (
-    <div className={`min-h-screen bg-background transition-all duration-300 ${isOpen ? "md:pl-64" : "md:pl-0"}`}>
+    <div className={`min-h-screen bg-background transition-all duration-300 ${isOpen ? "md:pl-72" : "md:pl-20"}`}>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <h1 className="text-2xl font-bold text-foreground mb-8">Statistics</h1>
+        <PageHeader
+          eyebrow="Fight record"
+          title="Statistics"
+          description="Your last 7 days, best grounds, and every saved bout. Filter to see what earned it."
+          className="mb-8"
+        />
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-card p-6 rounded-lg border border-border">
-            <h3 className="text-sm font-medium text-muted-foreground mb-1">Today&apos;s Focus</h3>
-            <p className="text-2xl font-bold text-primary">{stats?.todayMinutes || 0}m</p>
+          <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
+            <h3 className="text-sm font-medium text-muted-foreground mb-1">Today&apos;s focus</h3>
+            <p className="font-numeral text-2xl font-semibold tabular-nums text-foreground">{stats?.todayMinutes || 0}<span className="text-sm font-medium text-muted-foreground">m</span></p>
           </div>
-          <div className="bg-card p-6 rounded-lg border border-border">
-            <h3 className="text-sm font-medium text-muted-foreground mb-1">Current Streak</h3>
-            <p className="text-2xl font-bold text-primary">{stats?.currentStreak || 0} days</p>
+          <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
+            <h3 className="text-sm font-medium text-muted-foreground mb-1">Win streak</h3>
+            <p className="font-numeral text-2xl font-semibold tabular-nums text-foreground">{stats?.currentStreak || 0} <span className="text-sm font-medium text-muted-foreground">days</span></p>
           </div>
-          <div className="bg-card p-6 rounded-lg border border-border">
-            <h3 className="text-sm font-medium text-muted-foreground mb-1">This Week</h3>
-            <p className="text-2xl font-bold text-primary">{stats?.weeklyMinutes || 0}m</p>
+          <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
+            <h3 className="text-sm font-medium text-muted-foreground mb-1">This week</h3>
+            <p className="font-numeral text-2xl font-semibold tabular-nums text-foreground">{stats?.weeklyMinutes || 0}<span className="text-sm font-medium text-muted-foreground">m</span></p>
           </div>
-          <div className="bg-card p-6 rounded-lg border border-border">
-            <h3 className="text-sm font-medium text-muted-foreground mb-1">Total Focus Time</h3>
-            <p className="text-2xl font-bold text-primary">{stats?.totalMinutes || 0}m</p>
+          <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
+            <h3 className="text-sm font-medium text-muted-foreground mb-1">Total focus</h3>
+            <p className="font-numeral text-2xl font-semibold tabular-nums text-foreground">{stats?.totalMinutes || 0}<span className="text-sm font-medium text-muted-foreground">m</span></p>
           </div>
         </div>
 
@@ -179,9 +185,9 @@ export default function StatsPage() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData} margin={{ top: 20, right: 20, left: -10, bottom: 0 }}>
                     <defs>
-                      <linearGradient id="roseGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#fb7185" />
-                        <stop offset="100%" stopColor="#e11d48" />
+                      <linearGradient id="arenaGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#fb923c" />
+                        <stop offset="100%" stopColor="#c2410c" />
                       </linearGradient>
                     </defs>
 
@@ -212,14 +218,14 @@ export default function StatsPage() {
                       animationDuration={200}
                     />
 
-                    <Bar dataKey="minutes" barSize={40} radius={[10, 10, 0, 0]} fill="url(#roseGradient)">
+                    <Bar dataKey="minutes" barSize={40} radius={[10, 10, 0, 0]} fill="url(#arenaGradient)">
                       {chartData.map((entry, index) => (
                         <Cell
                           key={entry.date}
                           style={{
                             opacity: entry.minutes === 0 ? 0.15 : 1,
                             filter: entry.isToday
-                              ? "drop-shadow(0 0 12px rgba(244, 63, 94, 0.6))"
+                              ? "drop-shadow(0 0 12px rgba(194, 65, 12, 0.55))"
                               : "none",
                             animationDelay: `${index * 60}ms`,
                           }}
@@ -364,8 +370,9 @@ export default function StatsPage() {
               </div>
             ))}
             {filteredSessions?.length === 0 && (
-              <div className="p-8 text-center text-muted-foreground">
-                No sessions yet. Start your first timer session!
+              <div className="p-8 text-center">
+                <p className="font-medium text-foreground">No bouts match these filters</p>
+                <p className="mt-1 text-sm text-muted-foreground">Clear the filters, or start a round on the timer.</p>
               </div>
             )}
           </div>

@@ -9,9 +9,15 @@ export default function ProtectedLayout({
 }) {
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-background flex">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:text-primary-foreground"
+      >
+        Skip to content
+      </a>
+      <div className="min-h-screen bg-background">
         <Sidebar />
-        <main className="flex-1 md:transition-all md:duration-300 overflow-hidden">
+        <main id="main" className="min-w-0 pb-24 md:pb-0">
           {children}
         </main>
         <MobileNav />

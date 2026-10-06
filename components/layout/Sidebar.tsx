@@ -4,9 +4,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useSidebarStore } from "@/stores/useSidebarStore";
-import { Clock, BarChart3, User, Folder, LogOut, ChevronLeft, History } from "lucide-react";
+import {
+  Clock,
+  BarChart3,
+  User,
+  Folder,
+  LogOut,
+  ChevronLeft,
+  History,
+  Timer,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DarkModeToggle } from "@/components/DarkModeToggle";
+import { cn } from "@/lib/utils";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -14,65 +24,121 @@ export function Sidebar() {
   const { isOpen, toggle } = useSidebarStore();
 
   const navItems = [
-    { href: "/", label: "Timer", icon: Clock },
-    { href: "/categories", label: "Categories", icon: Folder },
-    { href: "/sessions", label: "Sessions", icon: History },
-    { href: "/stats", label: "Stats", icon: BarChart3 },
-    { href: "/profile", label: "Profile", icon: User },
+    { href: "/", label: "Timer", hint: "Enter the arena", icon: Clock },
+    { href: "/categories", label: "Categories", hint: "Training grounds", icon: Folder },
+    { href: "/sessions", label: "Sessions", hint: "Bout history", icon: History },
+    { href: "/stats", label: "Stats", hint: "Fight record", icon: BarChart3 },
+    { href: "/profile", label: "Profile", hint: "Fighter card", icon: User },
   ];
 
   return (
-    <>
-      <div
-        className={`hidden md:flex h-screen flex-col bg-sidebar border-r border-sidebar-border fixed left-0 top-0 z-40 overflow-hidden transition-all duration-300 ${
-          isOpen ? "w-64" : "w-0"
-        }`}
-      >
-        <div className="p-6 border-b border-sidebar-border whitespace-nowrap">
-          <h1 className="text-xl font-bold text-sidebar-foreground">Time Arena</h1>
+    <aside
+      aria-label="Primary"
+      className={cn(
+        "hidden md:flex h-screen flex-col bg-sidebar border-r border-sidebar-border fixed left-0 top-0 z-40 transition-all duration-300",
+        isOpen ? "w-72" : "w-20"
+      )}
+    >
+      <div className="flex items-center gap-3 p-5 border-b border-sidebar-border">
+        <div
+          aria-hidden
+          className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-[0_8px_24px_-8px_var(--arena-ember)]"
+        >
+          <Timer className="size-5" strokeWidth={2.5} />
         </div>
+        {isOpen && (
+          <div className="min-w-0 flex-1">
+            <p className="font-display text-[17px] font-bold leading-none text-sidebar-foreground">
+              Time Arena
+            </p>
+            <p className="mt-1 truncate text-xs text-muted-foreground">
+              Train your focus
+            </p>
+          </div>
+        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggle}
+          aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
+          aria-expanded={isOpen}
+          className="ml-auto size-8 shrink-0 rounded-lg"
+        >
+          <ChevronLeft
+            className={cn("size-4 transition-transform duration-300", !isOpen && "rotate-180")}
+          />
+        </Button>
+      </div>
 
-        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-          {navItems.map(({ href, label, icon: Icon }) => (
-            <Link key={href} href={href}>
-              <Button
-                variant={pathname === href ? "secondary" : "ghost"}
-                className="w-full justify-start whitespace-nowrap"
-              >
-                <Icon className="mr-2 h-4 w-4 shrink-0" />
-                {label}
-              </Button>
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        {isOpen && (
+          <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            Arena
+          </p>
+        )}
+        {navItems.map(({ href, label, hint, icon: Icon }) => {
+          const active = pathname === href;
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-current={active ? "page" : undefined}
+              title={!isOpen ? label : undefined}
+              className={cn(
+                "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                "focus-visible:outline-2 focus-visible:outline-ring",
+                active
+                  ? "bg-primary/10 text-foreground shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--arena-ember)_25%,transparent)]"
+                  : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                !isOpen && "justify-center px-0"
+              )}
+            >
+              <span
+                aria-hidden
+                className={cn(
+                  "absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-full bg-primary transition-all",
+                  active ? "opacity-100 scale-100" : "opacity-0 scale-50"
+                )}
+              />
+              <Icon
+                className={cn(
+                  "size-[18px] shrink-0",
+                  active ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                )}
+              />
+              {isOpen && (
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate leading-none">{label}</span>
+                  <span className="mt-0.5 block truncate text-xs font-normal text-muted-foreground">
+                    {hint}
+                  </span>
+                </span>
+              )}
             </Link>
-          ))}
-        </nav>
+          );
+        })}
+      </nav>
 
-        <div className="px-4 py-4 space-y-2 border-t border-sidebar-border">
+      <div className="space-y-2 border-t border-sidebar-border p-3">
+        {isOpen && user && (
+          <p className="truncate px-3 pt-1 text-xs text-muted-foreground" title={user.email ?? undefined}>
+            {user.name ?? user.email ?? "Fighter"}
+          </p>
+        )}
+        <div className={cn("flex gap-2", isOpen ? "flex-row" : "flex-col items-center")}>
           <DarkModeToggle />
           <Button
             variant="ghost"
-            className="w-full justify-center whitespace-nowrap"
             onClick={() => signOut()}
+            aria-label="Log out"
+            title={!isOpen ? "Log out" : undefined}
+            className={cn(isOpen ? "flex-1 justify-start" : "size-9 justify-center px-0")}
           >
-            <LogOut className="mr-2 h-4 w-4 shrink-0" />
-            Logout
+            <LogOut className="size-4 shrink-0" />
+            {isOpen && "Log out"}
           </Button>
         </div>
       </div>
-
-      <div
-        className={`hidden md:flex fixed left-0 top-1/2 -translate-y-1/2 z-50 transition-all duration-300 ${
-          isOpen ? "left-64" : "left-0"
-        }`}
-      >
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-10 w-10 rounded-l-none border-l-0 bg-background shadow-md"
-          onClick={toggle}
-        >
-          <ChevronLeft className={`h-4 w-4 transition-transform ${isOpen ? "" : "rotate-180"}`} />
-        </Button>
-      </div>
-    </>
+    </aside>
   );
 }

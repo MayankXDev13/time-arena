@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSidebarStore } from "@/stores/useSidebarStore";
 import { useThemeSync } from "@/hooks/useThemeSync";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { CategoryDropdown } from "@/components/CategoryDropdown";
 import { Badge } from "@/components/ui/badge";
@@ -153,7 +154,7 @@ export default function SessionsPage() {
   if (!sessions) {
     return (
       <div className={`min-h-screen bg-background transition-all duration-300 ${
-        isOpen ? "md:pl-64" : "md:pl-0"
+        isOpen ? "md:pl-72" : "md:pl-20"
       }`}>
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           <h1 className="text-2xl font-bold text-foreground mb-8 flex items-center gap-3">
@@ -174,10 +175,12 @@ export default function SessionsPage() {
       isOpen ? "md:pl-64" : "md:pl-0"
     }`}>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <h1 className="text-2xl font-bold text-foreground mb-8 flex items-center gap-3">
-          <History className="w-8 h-8" />
-          Session History
-        </h1>
+        <PageHeader
+          eyebrow="Bout history"
+          title="Sessions"
+          description="Every saved round, newest first. Filter by ground or fix a misclick."
+          className="mb-8"
+        />
 
         <Card>
           <CardHeader>
@@ -202,10 +205,10 @@ export default function SessionsPage() {
                 sessions.page.map((session: any) => (
                   <div 
                     key={session.id} 
-                    className="group grid grid-cols-[110px_100px_100px_1fr_auto] items-center gap-4 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                    className="group grid grid-cols-[1fr_auto] sm:grid-cols-[110px_100px_100px_1fr_auto] items-center gap-3 sm:gap-4 p-3 rounded-xl border bg-card hover:bg-accent/40 transition-colors"
                   >
                     {/* Date & Time */}
-                    <div className="flex flex-col">
+                    <div className="flex flex-col col-span-1 sm:col-auto">
                       <div className="flex items-center gap-1 text-sm font-medium text-foreground">
                         <CalendarDays className="w-3 h-3 text-muted-foreground shrink-0" />
                         <span className="truncate">{formatDate(session.start)}</span>
@@ -247,7 +250,7 @@ export default function SessionsPage() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-1 col-span-2 sm:col-auto sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -271,11 +274,11 @@ export default function SessionsPage() {
                 ))
               ) : (
                 <div className="py-12 text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-muted mb-4">
                     <History className="w-8 h-8 text-muted-foreground" />
                   </div>
-                  <p className="text-muted-foreground text-lg font-medium">No sessions found</p>
-                  <p className="text-sm text-muted-foreground mt-1">Start your first timer session!</p>
+                  <p className="font-medium text-foreground text-lg">No bouts yet</p>
+                  <p className="text-sm text-muted-foreground mt-1">Start your first round on the timer — it lands here.</p>
                 </div>
               )}
             </div>

@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSidebarStore } from "@/stores/useSidebarStore";
 import { Button } from "@/components/ui/button";
 import { COLOR_OPTIONS } from "@/components/CategoryDropdown";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { Plus, Trash2, Edit2, Check, X } from "lucide-react";
 
 export default function CategoriesPage() {
@@ -110,12 +111,17 @@ export default function CategoriesPage() {
 
   return (
     <div className={`min-h-screen bg-background transition-all duration-300 ${
-      isOpen ? "md:pl-64" : "md:pl-0"
+      isOpen ? "md:pl-72" : "md:pl-20"
     }`}>
       <div className="container mx-auto px-4 py-8 max-w-2xl">
-        <h1 className="text-2xl font-bold text-foreground mb-8">Categories</h1>
+        <PageHeader
+          eyebrow="Training grounds"
+          title="Categories"
+          description="Group rounds by craft — work, study, training. Colors mark each ground on your record."
+          className="mb-8"
+        />
 
-        <div className="bg-card p-6 rounded-lg border border-border mb-8">
+        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm mb-6">
           <h2 className="text-lg font-semibold text-card-foreground mb-4">Create New Category</h2>
           <div className="flex gap-4">
             <input
@@ -143,7 +149,7 @@ export default function CategoriesPage() {
           </div>
         </div>
 
-        <div className="bg-card p-6 rounded-lg border border-border">
+        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
           <h2 className="text-lg font-semibold text-card-foreground mb-4">Your Categories</h2>
           <div className="space-y-3">
             {categories?.map((category: any) => (
@@ -193,9 +199,10 @@ export default function CategoriesPage() {
               </div>
             ))}
             {categories?.length === 0 && (
-              <p className="text-muted-foreground text-center py-4">
-                No categories yet. Create your first one above!
-              </p>
+              <div className="py-6 text-center">
+                <p className="font-medium text-foreground">No grounds yet</p>
+                <p className="mt-1 text-sm text-muted-foreground">Create your first one above — it becomes the default for new rounds.</p>
+              </div>
             )}
           </div>
         </div>

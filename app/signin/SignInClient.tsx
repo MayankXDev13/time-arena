@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { SignInForm } from "@/components/auth/SignInForm";
+import { AuthShell } from "@/components/auth/AuthShell";
 import { useRouter } from "next/navigation";
 
 export default function SignInPage() {
@@ -24,25 +25,25 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="w-full max-w-md space-y-6">
-        <div className="text-center">
-          <Link href="/" className="text-3xl font-bold text-foreground">
-            Time Arena
-          </Link>
-          <p className="text-muted-foreground mt-2">
-            Boost your productivity with focused time tracking
-          </p>
+    <AuthShell
+      eyebrow="Welcome back"
+      title="Step back in"
+      description="Your record kept your seat warm. Pick up where the bell left off."
+    >
+      {message && (
+        <div className="rounded-xl border border-green-800/30 bg-green-950/40 px-4 py-3 text-center text-sm text-green-200">
+          {message}
         </div>
+      )}
 
-        {message && (
-          <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-md text-center">
-            {message}
-          </div>
-        )}
+      <SignInForm />
 
-        <SignInForm />
-      </div>
-    </div>
+      <p className="text-center text-sm text-muted-foreground">
+        New to the arena?{" "}
+        <Link href="/signup" className="font-semibold text-primary hover:underline">
+          Create your fighter card
+        </Link>
+      </p>
+    </AuthShell>
   );
 }

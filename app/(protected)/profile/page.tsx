@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSidebarStore } from "@/stores/useSidebarStore";
 import { useThemeSync } from "@/hooks/useThemeSync";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { AccountInfo } from "@/components/profile/AccountInfo";
 import { Preferences } from "@/components/profile/Preferences";
@@ -40,7 +41,7 @@ export default function ProfilePage() {
   if (!stats || !contribution) {
     return (
       <div className={`min-h-screen bg-background transition-all duration-300 ${
-        isOpen ? "md:pl-64" : "md:pl-0"
+        isOpen ? "md:pl-72" : "md:pl-20"
       }`}>
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           <h1 className="text-2xl font-bold text-foreground mb-8">Profile</h1>
@@ -55,7 +56,12 @@ export default function ProfilePage() {
       isOpen ? "md:pl-64" : "md:pl-0"
     }`}>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <h1 className="text-2xl font-bold text-foreground mb-8">Profile</h1>
+        <PageHeader
+          eyebrow="Fighter card"
+          title="Profile"
+          description="Your record, year of training, settings, and badges."
+          className="mb-8"
+        />
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6 grid grid-cols-4 w-full max-w-md">
