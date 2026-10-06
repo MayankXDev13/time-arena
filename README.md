@@ -44,7 +44,8 @@ Auth tables (`user`, `session`, `account`, `verification`) are generated
 from the better-auth config; app tables live in `db/app-schema.ts`.
 
 ```bash
-bunx @better-auth/cli generate --config ./lib/auth.ts --output ./db/auth-schema.ts -y
+# keep the CLI major.minor in sync with the better-auth version in package.json
+bunx @better-auth/cli@1.4 generate --config ./lib/auth.ts --output ./db/auth-schema.ts -y
 bun run db:generate # create migration from schema
 bun run db:migrate # apply migrations to Neon
 ```
