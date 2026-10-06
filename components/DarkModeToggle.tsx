@@ -24,7 +24,9 @@ export function DarkModeToggle() {
       variant="ghost"
       size="icon"
       onClick={toggleTheme}
-      className="w-full justify-center"
+      aria-label={theme === "light" ? "Switch to dark" : "Switch to light"}
+      title={theme === "light" ? "Switch to dark" : "Switch to light"}
+      className="size-9 shrink-0"
     >
       {theme === 'light' ? (
         <Moon className="h-4 w-4" />

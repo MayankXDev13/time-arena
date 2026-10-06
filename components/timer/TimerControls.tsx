@@ -23,69 +23,89 @@ export function TimerControls({
   stop,
   reset,
 }: TimerControlsProps) {
+  const idle = !isRunning && elapsed === 0 && !isCompleted;
+
   const handleStartPause = async () => {
     if (isCompleted) {
       await reset();
     } else if (isRunning) {
       pause();
-    } else if (elapsed === 0 || isCompleted) {
+    } else if (elapsed === 0) {
       await start();
     } else {
       resume();
     }
   };
 
-  const getPlayButtonStyle = () => {
-    return 'bg-primary text-primary-foreground hover:bg-primary/90';
-  };
+  const primaryLabel = isCompleted ? "Start new round" : isRunning ? "Pause" : elapsed === 0 ? "Start focus" : "Resume";
 
   return (
-    <div className="flex items-center justify-center gap-6">
-      <Button
-        onClick={stop}
-        disabled={!isRunning && elapsed === 0 && !isCompleted}
-        size="lg"
-        className={cn(
-          'w-16 h-16 rounded-full border-2 transition-all duration-300',
-          'hover:scale-110 active:scale-95',
-          'bg-secondary border-secondary-foreground/20 hover:bg-secondary/80',
-          'disabled:opacity-50 disabled:cursor-not-allowed'
-        )}
-      >
-        <PiStopFill className="w-6 h-6 text-secondary-foreground" />
-      </Button>
+    <div className="flex flex-col items-center gap-3">
+      <div className="flex items-center justify-center gap-4 sm:gap-5">
+        <div className="flex w-[76px] flex-col items-center gap-1.5">
+          <Button
+            onClick={stop}
+            disabled={idle}
+            size="lg"
+            variant="secondary"
+            aria-label="Stop and save session"
+            title="Stop and save"
+            className={cn(
+              'size-14 rounded-2xl border transition-all duration-200',
+              'hover:scale-[1.04] active:scale-95',
+              'disabled:cursor-not-allowed disabled:opacity-45'
+            )}
+          >
+            <PiStopFill className="size-5" aria-hidden />
+          </Button>
+          <span className="text-xs font-medium text-muted-foreground">Stop</span>
+        </div>
 
-      <Button
-        onClick={handleStartPause}
-        size="lg"
-        className={cn(
-          'w-20 h-20 rounded-full transition-all duration-300 shadow-xl',
-          'hover:scale-110 active:scale-95',
-          getPlayButtonStyle()
-        )}
-      >
-        {isCompleted ? (
-          <PiArrowCounterClockwiseFill className="w-8 h-8" />
-        ) : isRunning ? (
-          <PiPauseFill className="w-8 h-8" />
-        ) : (
-          <PiPlayFill className="w-8 h-8 ml-1" />
-        )}
-      </Button>
+        <div className="flex w-[104px] flex-col items-center gap-1.5">
+          <Button
+            onClick={handleStartPause}
+            size="lg"
+            aria-label={primaryLabel}
+            title={`${primaryLabel} (Space)`}
+            className={cn(
+              'size-20 rounded-[26px] bg-primary text-primary-foreground transition-all duration-200',
+              'shadow-[0_18px_44px_-12px_var(--arena-ember)]',
+              'hover:scale-[1.04] hover:brightness-105 active:scale-95'
+            )}
+          >
+            {isCompleted ? (
+              <PiArrowCounterClockwiseFill className="size-7" aria-hidden />
+            ) : isRunning ? (
+              <PiPauseFill className="size-7" aria-hidden />
+            ) : (
+              <PiPlayFill className="size-7 translate-x-[2px]" aria-hidden />
+            )}
+          </Button>
+          <span className="text-xs font-semibold text-foreground">{primaryLabel}</span>
+        </div>
 
-      <Button
-        onClick={async () => await reset()}
-        disabled={!isRunning && elapsed === 0 && !isCompleted}
-        size="lg"
-        className={cn(
-          'w-16 h-16 rounded-full border-2 transition-all duration-300',
-          'hover:scale-110 active:scale-95',
-          'bg-secondary border-secondary-foreground/20 hover:bg-secondary/80',
-          'disabled:opacity-50 disabled:cursor-not-allowed'
-        )}
-      >
-        <PiArrowCounterClockwiseFill className="w-6 h-6 text-secondary-foreground" />
-      </Button>
+        <div className="flex w-[76px] flex-col items-center gap-1.5">
+          <Button
+            onClick={async () => await reset()}
+            disabled={idle}
+            size="lg"
+            variant="secondary"
+            aria-label="Reset timer"
+            title="Reset"
+            className={cn(
+              'size-14 rounded-2xl border transition-all duration-200',
+              'hover:scale-[1.04] active:scale-95',
+              'disabled:cursor-not-allowed disabled:opacity-45'
+            )}
+          >
+            <PiArrowCounterClockwiseFill className="size-5" aria-hidden />
+          </Button>
+          <span className="text-xs font-medium text-muted-foreground">Reset</span>
+        </div>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Press <kbd className="font-numeral rounded-md border border-border bg-card px-1.5 py-0.5 text-[11px]">Space</kbd> to {isRunning ? "pause" : "start"} · <kbd className="font-numeral rounded-md border border-border bg-card px-1.5 py-0.5 text-[11px]">R</kbd> to reset
+      </p>
     </div>
   );
 }
