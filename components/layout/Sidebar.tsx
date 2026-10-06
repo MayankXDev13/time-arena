@@ -39,7 +39,27 @@ export function Sidebar() {
         isOpen ? "w-72" : "w-20"
       )}
     >
-      <div className="flex items-center gap-3 p-5 border-b border-sidebar-border">
+      {/* Floating edge toggle — vertically centered, outside the sidebar */}
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={toggle}
+        aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
+        aria-expanded={isOpen}
+        title={isOpen ? "Collapse sidebar" : "Expand sidebar"}
+        className="absolute top-1/2 -right-4 z-50 size-8 -translate-y-1/2 rounded-full border-sidebar-border bg-sidebar text-muted-foreground shadow-md transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-2 focus-visible:outline-ring"
+      >
+        <ChevronLeft
+          className={cn("size-4 transition-transform duration-300", !isOpen && "rotate-180")}
+        />
+      </Button>
+
+      <div
+        className={cn(
+          "flex items-center gap-3 p-5 border-b border-sidebar-border",
+          !isOpen && "justify-center px-0"
+        )}
+      >
         <div
           aria-hidden
           className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-[0_8px_24px_-8px_var(--arena-ember)]"
@@ -56,18 +76,6 @@ export function Sidebar() {
             </p>
           </div>
         )}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggle}
-          aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
-          aria-expanded={isOpen}
-          className="ml-auto size-8 shrink-0 rounded-lg"
-        >
-          <ChevronLeft
-            className={cn("size-4 transition-transform duration-300", !isOpen && "rotate-180")}
-          />
-        </Button>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
