@@ -87,14 +87,11 @@ export function useAuth(): AuthState {
     }
   };
 
-  const APP_URL =
-  process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-
   const signInWithGitHub = async (): Promise<AuthError> => {
     try {
       const result = await authClient.signIn.social({
         provider: "github",
-        callbackURL: `${APP_URL}/dashboard`, // Redirect to dashboard after login
+        callbackURL: "/", // Redirect to home after login
       });
 
       if (result?.error) {
@@ -113,7 +110,7 @@ export function useAuth(): AuthState {
     try {
       const result = await authClient.signIn.social({
         provider: "google",
-        callbackURL: `${APP_URL}/dashboard`, // Redirect to dashboard after login
+        callbackURL: "/", // Redirect to home after login
       });
 
       if (result?.error) {
