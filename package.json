@@ -12,7 +12,6 @@
     "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
-    "@convex-dev/better-auth": "^0.10.10",
     "@hookform/resolvers": "^5.2.2",
     "@neondatabase/serverless": "^1.2.0",
     "@radix-ui/react-dialog": "^1.1.15",
@@ -26,7 +25,6 @@
     "better-auth": "1.4.9",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "convex": "^1.31.5",
     "date-fns": "^4.1.0",
     "drizzle-orm": "^0.45.3",
     "lucide-react": "^0.562.0",

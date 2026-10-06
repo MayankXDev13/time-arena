@@ -11,22 +11,22 @@ function columnNames(table: Parameters<typeof getTableConfig>[0]) {
   return getTableConfig(table).columns.map((c) => c.name).sort();
 }
 
-describe("app schema (Convex parity, avatars dropped)", () => {
-  it("exposes a sessions table matching convex/schema.ts", () => {
+describe("app schema (Neon, avatars dropped)", () => {
+  it("exposes a sessions table", () => {
     expect(getTableConfig(sessions).name).toBe("sessions");
     expect(columnNames(sessions)).toEqual(
       ["id", "userId", "categoryId", "start", "endedAt", "duration", "mode"].sort(),
     );
   });
 
-  it("exposes a categories table matching convex/schema.ts", () => {
+  it("exposes a categories table", () => {
     expect(getTableConfig(categories).name).toBe("categories");
     expect(columnNames(categories)).toEqual(
       ["id", "userId", "name", "color"].sort(),
     );
   });
 
-  it("exposes a userSettings table matching convex/schema.ts", () => {
+  it("exposes a userSettings table", () => {
     expect(getTableConfig(userSettings).name).toBe("userSettings");
     expect(columnNames(userSettings)).toEqual(
       [

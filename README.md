@@ -1,17 +1,42 @@
-# Set Environment Variables
+# Time Arena
 
+## Setup
+
+```bash
+cp .env.example .env
+```
+
+Fill in `.env`:
+
+```bash
 # Generate secret if you haven't already
-npx convex env set BETTER_AUTH_SECRET=$(openssl rand -base64 32)
-npx convex env set SITE_URL=https://your-domain.com
+# openssl rand -base64 32
+BETTER_AUTH_SECRET=
+DATABASE_URL= # Neon pooled connection string
+DIRECT_URL= # Neon direct connection string (migrations)
+
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 # Google OAuth
-npx convex env set GOOGLE_CLIENT_ID=your-google-client-id
-npx convex env set GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
 
 # GitHub OAuth
-npx convex env set GITHUB_CLIENT_ID=your-github-client-id
-npx convex env set GITHUB_CLIENT_SECRET=your-github-client-secret
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+```
 
-# Discord OAuth (optional)
-npx convex env set DISCORD_CLIENT_ID=your-discord-client-id
-npx convex env set DISCORD_CLIENT_SECRET=your-discord-client-secret
+## Database
+
+```bash
+bun run db:generate # create migration from schema
+bun run db:migrate # apply migrations to Neon
+```
+
+## Develop
+
+```bash
+bun run dev
+bun run test
+bun run build
+```
