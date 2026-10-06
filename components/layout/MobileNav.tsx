@@ -1,15 +1,15 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Clock, BarChart3, User, History, Folder } from "lucide-react";
+import { Timer, BarChart3, User, History, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function MobileNav() {
   const pathname = usePathname();
 
   const navItems = [
-    { href: "/", label: "Timer", icon: Clock },
-    { href: "/categories", label: "Areas", icon: Folder },
+    { href: "/", label: "Timer", icon: Timer },
+    { href: "/categories", label: "Areas", icon: LayoutGrid },
     { href: "/sessions", label: "Bouts", icon: History },
     { href: "/stats", label: "Record", icon: BarChart3 },
     { href: "/profile", label: "Card", icon: User },

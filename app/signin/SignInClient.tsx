@@ -29,21 +29,22 @@ export default function SignInPage() {
       eyebrow="Welcome back"
       title="Step back in"
       description="Your record kept your seat warm. Pick up where the bell left off."
+      bottomNote={
+        <>
+          Don&apos;t have an account?{" "}
+          <Link href="/signup" className="font-semibold text-[#f0642b] hover:underline">
+            Sign up
+          </Link>
+        </>
+      }
     >
       {message && (
-        <div className="rounded-xl border border-green-800/30 bg-green-950/40 px-4 py-3 text-center text-sm text-green-200">
+        <div className="mb-4 rounded-[10px] border border-green-500/25 bg-green-500/10 px-4 py-3 text-center text-sm text-green-300">
           {message}
         </div>
       )}
 
       <SignInForm />
-
-      <p className="text-center text-sm text-muted-foreground">
-        New to the arena?{" "}
-        <Link href="/signup" className="font-semibold text-primary hover:underline">
-          Create your fighter card
-        </Link>
-      </p>
     </AuthShell>
   );
 }

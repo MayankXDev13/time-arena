@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api, qk } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
-import { ChevronDown, Check } from "lucide-react";
+import { ChevronDown, Check, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface CategoryDropdownProps {
@@ -65,19 +65,20 @@ export function CategoryDropdown({
         variant="outline"
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="w-full justify-between bg-card hover:bg-accent"
+        className="h-11 w-full justify-between rounded-xl border-border bg-muted/50 px-3.5 hover:bg-muted"
       >
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-2.5">
+          <Target className="size-[18px] shrink-0 text-foreground" strokeWidth={2.25} aria-hidden />
           {selectedCategory ? (
             <>
               <div className={`w-3 h-3 rounded-full ${selectedCategory.color}`} />
-              <span>{selectedCategory.name}</span>
+              <span className="text-sm font-medium">{selectedCategory.name}</span>
             </>
           ) : (
-            <span className="text-muted-foreground">Select category</span>
+            <span className="text-sm text-muted-foreground">Select category</span>
           )}
         </div>
-        <ChevronDown className="w-4 h-4" />
+        <ChevronDown className="w-4 h-4 shrink-0 text-muted-foreground" />
       </Button>
 
       {isOpen && (

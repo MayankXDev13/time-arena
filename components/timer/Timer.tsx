@@ -7,11 +7,12 @@ import { TimerModeSelector } from './TimerModeSelector';
 import { CategoryDropdown } from '@/components/CategoryDropdown';
 import { useTimer } from '@/hooks/useTimer';
 import { useTimerStore } from '@/stores/useTimerStore';
-import { Minus, Plus } from "lucide-react";
+import { Minus, Plus, Timer as TimerIcon, Coffee } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 function DurationStepper({
   label,
+  icon: Icon,
   value,
   onChange,
   disabled,
@@ -19,6 +20,7 @@ function DurationStepper({
   max = 180,
 }: {
   label: string;
+  icon: typeof TimerIcon;
   value: number;
   onChange: (v: number) => void;
   disabled?: boolean;
@@ -26,32 +28,35 @@ function DurationStepper({
   max?: number;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-3 py-2.5">
-      <div>
-        <p className="text-sm font-medium text-foreground">{label}</p>
-        <p className="font-numeral text-xs tabular-nums text-muted-foreground">{value} min per round</p>
+    <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-muted/50 px-3 py-2.5">
+      <div className="flex min-w-0 items-center gap-2">
+        <Icon className="size-5 shrink-0 text-primary" strokeWidth={2.25} aria-hidden />
+        <div className="leading-tight">
+          <p className="text-[13px] font-bold text-foreground">{label}</p>
+          <p className="font-numeral text-[11px] tabular-nums text-muted-foreground">min per round</p>
+        </div>
       </div>
-      <div className="flex items-center gap-1">
+      <div className="flex shrink-0 items-center gap-0.5 rounded-full border border-border bg-card px-1 py-0.5">
         <Button
           variant="ghost"
           size="icon"
           aria-label={`Decrease ${label}`}
           disabled={disabled || value <= min}
-          onClick={() => onChange(Math.max(min, value - 5))}
-          className="size-8 rounded-lg"
+          onClick={() => onChange(Math.max(min, value - 1))}
+          className="size-7 rounded-full"
         >
-          <Minus className="size-4" />
+          <Minus className="size-3.5" />
         </Button>
-        <span className="font-numeral w-10 text-center text-sm font-semibold tabular-nums">{value}m</span>
+        <span className="font-numeral w-9 text-center text-[13px] font-bold tabular-nums">{value}m</span>
         <Button
           variant="ghost"
           size="icon"
           aria-label={`Increase ${label}`}
           disabled={disabled || value >= max}
-          onClick={() => onChange(Math.min(max, value + 5))}
-          className="size-8 rounded-lg"
+          onClick={() => onChange(Math.min(max, value + 1))}
+          className="size-7 rounded-full"
         >
-          <Plus className="size-4" />
+          <Plus className="size-3.5" />
         </Button>
       </div>
     </div>
@@ -104,9 +109,9 @@ export function Timer() {
         breakDuration={breakDuration}
       />
 
-      <div className="grid w-full max-w-[420px] gap-2.5">
+      <div className="grid w-full max-w-[460px] gap-2.5">
         <div>
-          <p id="timer-category-label" className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          <p id="timer-category-label" className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
             Fighting for
           </p>
           <CategoryDropdown
@@ -115,15 +120,17 @@ export function Timer() {
             className="w-full"
           />
         </div>
-        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:max-w-none">
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
           <DurationStepper
             label="Focus"
+            icon={TimerIcon}
             value={workDuration}
             onChange={setWorkDuration}
             disabled={isRunning}
           />
           <DurationStepper
             label="Break"
+            icon={Coffee}
             value={breakDuration}
             onChange={setBreakDuration}
             disabled={isRunning}

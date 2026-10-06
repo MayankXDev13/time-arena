@@ -37,7 +37,28 @@ export function TimerControls({
     }
   };
 
-  const primaryLabel = isCompleted ? "Start new round" : isRunning ? "Pause" : elapsed === 0 ? "Start focus" : "Resume";
+  const primaryLabel = isCompleted ? "Start new round" : isRunning ? "Pause" : elapsed === 0 ? "Start Round" : "Resume";
+
+  if (idle) {
+    return (
+      <div className="flex flex-col items-center">
+        <Button
+          onClick={handleStartPause}
+          size="lg"
+          aria-label="Start round"
+          title="Start round (Space)"
+          className={cn(
+            'h-12 rounded-xl bg-primary px-8 text-[15px] font-bold text-primary-foreground transition-all duration-200',
+            'shadow-[0_18px_44px_-12px_var(--arena-ember)]',
+            'hover:scale-[1.03] hover:brightness-105 active:scale-95'
+          )}
+        >
+          <PiPlayFill className="size-4 translate-x-[1px]" aria-hidden />
+          Start Round
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center gap-3">

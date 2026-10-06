@@ -5,38 +5,67 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useSidebarStore } from "@/stores/useSidebarStore";
 import {
-  Clock,
+  Timer as TimerStopwatch,
+  LayoutGrid,
   BarChart3,
-  User,
-  Folder,
   LogOut,
   ChevronLeft,
   History,
   Timer,
+  Settings,
+  SunMoon,
+  Moon,
+  type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { DarkModeToggle } from "@/components/DarkModeToggle";
 import { cn } from "@/lib/utils";
+import { useThemeStore } from "@/stores/useThemeStore";
+
+interface NavItem {
+  href: string;
+  label: string;
+  hint: string;
+  icon: LucideIcon;
+}
+
+type ThemeMode = "light" | "dark";
 
 export function Sidebar() {
   const pathname = usePathname();
   const { user, signOut } = useAuth();
   const { isOpen, toggle } = useSidebarStore();
+  const { theme, toggleTheme } = useThemeStore();
 
-  const navItems = [
-    { href: "/", label: "Timer", hint: "Enter the arena", icon: Clock },
-    { href: "/categories", label: "Categories", hint: "Training grounds", icon: Folder },
-    { href: "/sessions", label: "Sessions", hint: "Bout history", icon: History },
+  const navItems: NavItem[] = [
+    {
+      href: "/",
+      label: "Timer",
+      hint: "Enter the arena",
+      icon: TimerStopwatch,
+    },
+    {
+      href: "/categories",
+      label: "Categories",
+      hint: "Training grounds",
+      icon: LayoutGrid,
+    },
+    {
+      href: "/sessions",
+      label: "Sessions",
+      hint: "Bout history",
+      icon: History,
+    },
     { href: "/stats", label: "Stats", hint: "Fight record", icon: BarChart3 },
-    { href: "/profile", label: "Profile", hint: "Fighter card", icon: User },
   ];
+
+  const initial = (user?.name ?? user?.email ?? "F").charAt(0).toUpperCase();
 
   return (
     <aside
       aria-label="Primary"
       className={cn(
         "hidden md:flex h-screen flex-col bg-sidebar border-r border-sidebar-border fixed left-0 top-0 z-40 transition-all duration-300",
-        isOpen ? "w-72" : "w-20"
+        isOpen ? "w-72" : "w-20",
       )}
     >
       {/* Floating edge toggle — vertically centered, outside the sidebar */}
@@ -50,14 +79,17 @@ export function Sidebar() {
         className="absolute top-1/2 -right-4 z-50 size-8 -translate-y-1/2 rounded-full border-sidebar-border bg-sidebar text-muted-foreground shadow-md transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-2 focus-visible:outline-ring"
       >
         <ChevronLeft
-          className={cn("size-4 transition-transform duration-300", !isOpen && "rotate-180")}
+          className={cn(
+            "size-4 transition-transform duration-300",
+            !isOpen && "rotate-180",
+          )}
         />
       </Button>
 
       <div
         className={cn(
           "flex items-center gap-3 p-5 border-b border-sidebar-border",
-          !isOpen && "justify-center px-0"
+          !isOpen && "justify-center px-0",
         )}
       >
         <div
@@ -98,20 +130,22 @@ export function Sidebar() {
                 active
                   ? "bg-primary/10 text-foreground shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--arena-ember)_25%,transparent)]"
                   : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                !isOpen && "justify-center px-0"
+                !isOpen && "justify-center px-0",
               )}
             >
               <span
                 aria-hidden
                 className={cn(
                   "absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-full bg-primary transition-all",
-                  active ? "opacity-100 scale-100" : "opacity-0 scale-50"
+                  active ? "opacity-100 scale-100" : "opacity-0 scale-50",
                 )}
               />
               <Icon
                 className={cn(
-                  "size-[18px] shrink-0",
-                  active ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                  "size-4.5 shrink-0",
+                  active
+                    ? "text-primary"
+                    : "text-muted-foreground group-hover:text-foreground",
                 )}
               />
               {isOpen && (
@@ -127,25 +161,119 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="space-y-2 border-t border-sidebar-border p-3">
-        {isOpen && user && (
-          <p className="truncate px-3 pt-1 text-xs text-muted-foreground" title={user.email ?? undefined}>
-            {user.name ?? user.email ?? "Fighter"}
-          </p>
+      <div className="border-t border-sidebar-border p-3">
+        {isOpen ? (
+          <div className="flex flex-col gap-2.5">
+            <Link
+              href="/profile"
+              aria-label="Go to your profile"
+              className="flex items-center gap-2.5 rounded-xl px-1.5 py-1.5 transition-colors hover:bg-sidebar-accent focus-visible:outline-2 focus-visible:outline-ring"
+            >
+              {user?.image ? (
+                <img
+                  src={user.image}
+                  alt=""
+                  className="size-9 shrink-0 rounded-full object-cover"
+                />
+              ) : (
+                <span className="font-numeral grid size-9 shrink-0 place-items-center rounded-full bg-muted text-[13px] font-bold text-foreground">
+                  {initial}
+                </span>
+              )}
+              <span className="min-w-0 flex-1 leading-tight">
+                <span className="block truncate text-sm font-semibold text-sidebar-foreground">
+                  {user?.name ?? "Fighter"}
+                </span>
+                {user?.email && (
+                  <span
+                    className="block truncate text-xs text-muted-foreground"
+                    title={user.email}
+                  >
+                    {user.email}
+                  </span>
+                )}
+              </span>
+            </Link>
+
+            <div className="flex items-center justify-evenly gap-2.5">
+              {/* Theme toggle */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleTheme}
+                aria-label="Toggle theme"
+                title="Toggle theme"
+                className="size-9 rounded-xl text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-2 focus-visible:outline-ring"
+              >
+                {theme === "dark" ? (
+                  <SunMoon className="size-4 shrink-0" />
+                ) : (
+                  <Moon className="size-4 shrink-0" />
+                )}
+              </Button>
+
+              {/* Sign out */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => signOut()}
+                aria-label="Sign out"
+                title="Sign out"
+                className="size-9 rounded-xl text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-2 focus-visible:outline-ring"
+              >
+                <LogOut className="size-4 shrink-0" />
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-2">
+            <Link
+              href="/profile"
+              aria-label="Go to your profile"
+              title="Profile"
+              className="rounded-full focus-visible:outline-2 focus-visible:outline-ring"
+            >
+              {user?.image ? (
+                <img
+                  src={user.image}
+                  alt=""
+                  className="size-9 rounded-full object-cover"
+                />
+              ) : (
+                <span className="font-numeral grid size-9 place-items-center rounded-full bg-muted text-[13px] font-bold text-foreground">
+                  {initial}
+                </span>
+              )}
+            </Link>
+            {/* Theme toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+              title="Toggle theme"
+              className="size-9 rounded-xl text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-2 focus-visible:outline-ring"
+            >
+              {theme === "dark" ? (
+                <SunMoon className="size-4 shrink-0" />
+              ) : (
+                <Moon className="size-4 shrink-0" />
+              )}
+            </Button>
+            
+            {/* Sign out */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => signOut()}
+              aria-label="Sign out"
+              title="Sign out"
+              className="size-9"
+            >
+              <LogOut className="size-4 shrink-0" />
+            </Button>
+          </div>
         )}
-        <div className={cn("flex gap-2", isOpen ? "flex-row" : "flex-col items-center")}>
-          <DarkModeToggle />
-          <Button
-            variant="ghost"
-            onClick={() => signOut()}
-            aria-label="Log out"
-            title={!isOpen ? "Log out" : undefined}
-            className={cn(isOpen ? "flex-1 justify-start" : "size-9 justify-center px-0")}
-          >
-            <LogOut className="size-4 shrink-0" />
-            {isOpen && "Log out"}
-          </Button>
-        </div>
       </div>
     </aside>
   );

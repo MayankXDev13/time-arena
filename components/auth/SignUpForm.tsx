@@ -5,14 +5,9 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SocialAuthButtons } from "./SocialAuthButtons";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Loader2, Eye, EyeOff, Mail, Lock, User, ArrowRight } from "lucide-react";
 
 const signUpSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -30,6 +25,12 @@ const signUpSchema = z.object({
 });
 
 type SignUpFormData = z.infer<typeof signUpSchema>;
+
+const inputCls =
+  "h-11 w-full rounded-[10px] border border-white/10 bg-[#1d232e] pl-10 pr-11 text-sm text-white placeholder:text-white/35 outline-none transition focus:border-[#f0642b]/60 focus:ring-2 focus:ring-[#f0642b]/25";
+
+const inputClsNoEye =
+  "h-11 w-full rounded-[10px] border border-white/10 bg-[#1d232e] pl-10 pr-3 text-sm text-white placeholder:text-white/35 outline-none transition focus:border-[#f0642b]/60 focus:ring-2 focus:ring-[#f0642b]/25";
 
 export function SignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -57,136 +58,131 @@ export function SignUpForm() {
       setError(result.error.message);
       setIsLoading(false);
     } else {
-      // Success - redirect to signin page for login
       router.push("/signin?message=Account created successfully! Please sign in.");
     }
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">Create Account</CardTitle>
-        <CardDescription className="text-center">
-          Enter your information to create your account
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            <Input
+    <div>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-1.5">
+          <label htmlFor="name" className="text-sm font-semibold text-white">
+            Full Name
+          </label>
+          <div className="relative">
+            <User className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-white/40" />
+            <input
               id="name"
               type="text"
               placeholder="Enter your full name"
               {...register("name")}
               disabled={isLoading}
+              className={inputClsNoEye}
             />
-            {errors.name && (
-              <p className="text-sm text-destructive">{errors.name.message}</p>
-            )}
           </div>
+          {errors.name && <p className="text-sm text-red-400">{errors.name.message}</p>}
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
+        <div className="space-y-1.5">
+          <label htmlFor="email" className="text-sm font-semibold text-white">
+            Email
+          </label>
+          <div className="relative">
+            <Mail className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-white/40" />
+            <input
               id="email"
               type="email"
               placeholder="Enter your email"
               {...register("email")}
               disabled={isLoading}
+              className={inputClsNoEye}
             />
-            {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
-            )}
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <div className="relative">
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="Create a password"
-                {...register("password")}
-                disabled={isLoading}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                onClick={() => setShowPassword(!showPassword)}
-                disabled={isLoading}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-            {errors.password && (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <div className="relative">
-              <Input
-                id="confirmPassword"
-                type={showConfirmPassword ? "text" : "password"}
-                placeholder="Confirm your password"
-                {...register("confirmPassword")}
-                disabled={isLoading}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                disabled={isLoading}
-              >
-                {showConfirmPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-            {errors.confirmPassword && (
-              <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
-            )}
-          </div>
-
-          {error && (
-            <div className="text-sm text-destructive text-center bg-destructive/10 p-2 rounded">
-              {error}
-            </div>
-          )}
-
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating account...
-              </>
-            ) : (
-              "Create Account"
-            )}
-          </Button>
-        </form>
-
-        <SocialAuthButtons mode="signup" />
-
-        <div className="text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
-          <Link href="/signin" className="text-primary hover:underline">
-            Sign in
-          </Link>
+          {errors.email && <p className="text-sm text-red-400">{errors.email.message}</p>}
         </div>
-      </CardContent>
-    </Card>
+
+        <div className="space-y-1.5">
+          <label htmlFor="password" className="text-sm font-semibold text-white">
+            Password
+          </label>
+          <div className="relative">
+            <Lock className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-white/40" />
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="Create a password"
+              {...register("password")}
+              disabled={isLoading}
+              className={inputCls}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              disabled={isLoading}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/45 transition hover:text-white"
+            >
+              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
+          </div>
+          {errors.password && <p className="text-sm text-red-400">{errors.password.message}</p>}
+        </div>
+
+        <div className="space-y-1.5">
+          <label htmlFor="confirmPassword" className="text-sm font-semibold text-white">
+            Confirm Password
+          </label>
+          <div className="relative">
+            <Lock className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-white/40" />
+            <input
+              id="confirmPassword"
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="Confirm your password"
+              {...register("confirmPassword")}
+              disabled={isLoading}
+              className={inputCls}
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              disabled={isLoading}
+              aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/45 transition hover:text-white"
+            >
+              {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
+          </div>
+          {errors.confirmPassword && (
+            <p className="text-sm text-red-400">{errors.confirmPassword.message}</p>
+          )}
+        </div>
+
+        {error && (
+          <div className="rounded-[10px] border border-red-500/25 bg-red-500/10 px-3 py-2.5 text-center text-sm text-red-300">
+            {error}
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="flex h-11 w-full items-center justify-center gap-2 rounded-[10px] bg-[#f0642b] text-[15px] font-semibold text-black transition hover:bg-[#f0713a] disabled:opacity-70"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Creating account...
+            </>
+          ) : (
+            <>
+              Create Account
+              <ArrowRight className="size-4" strokeWidth={2.5} />
+            </>
+          )}
+        </button>
+      </form>
+
+      <SocialAuthButtons mode="signup" />
+    </div>
   );
 }

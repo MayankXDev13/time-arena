@@ -2,7 +2,7 @@
 
 import { useTimerStore, TimerMode } from '@/stores/useTimerStore';
 import { cn } from '@/lib/utils';
-import { PiClockBold, PiCoffeeBold } from 'react-icons/pi';
+import { Timer, Coffee } from 'lucide-react';
 
 export function TimerModeSelector() {
   const { mode, setMode, isRunning, workDuration, breakDuration } = useTimerStore();
@@ -14,15 +14,15 @@ export function TimerModeSelector() {
   };
 
   const modes = [
-    { key: 'work' as TimerMode, label: 'Focus', duration: workDuration, icon: PiClockBold },
-    { key: 'break' as TimerMode, label: 'Break', duration: breakDuration, icon: PiCoffeeBold },
+    { key: 'work' as TimerMode, label: 'Focus', duration: workDuration, icon: Timer },
+    { key: 'break' as TimerMode, label: 'Break', duration: breakDuration, icon: Coffee },
   ];
 
   return (
     <div
       role="tablist"
       aria-label="Timer mode"
-      className="relative grid w-full max-w-[340px] grid-cols-2 gap-1 rounded-2xl border border-border bg-card p-1.5 shadow-sm"
+      className="relative mx-auto grid w-full max-w-[400px] grid-cols-2 gap-2 rounded-2xl border border-border bg-muted/60 p-1.5"
     >
       {modes.map((m) => {
         const Icon = m.icon;
@@ -35,19 +35,17 @@ export function TimerModeSelector() {
             onClick={() => handleModeChange(m.key)}
             disabled={isRunning}
             className={cn(
-              'relative flex items-center justify-center gap-2.5 rounded-xl px-4 py-3 text-sm transition-all duration-200',
+              'relative flex items-center justify-center gap-2.5 rounded-xl px-4 py-2.5 text-sm transition-all duration-200',
               'disabled:cursor-not-allowed disabled:opacity-60',
               'focus-visible:outline-2 focus-visible:outline-ring',
               isActive
-                ? m.key === 'work'
-                  ? 'bg-primary text-primary-foreground shadow-[0_10px_28px_-10px_var(--arena-ember)]'
-                  : 'bg-[var(--arena-moss)] text-white shadow-[0_10px_28px_-10px_var(--arena-moss)]'
-                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                ? 'bg-primary text-primary-foreground shadow-[0_10px_28px_-10px_var(--arena-ember)]'
+                : 'text-muted-foreground hover:text-foreground'
             )}
           >
-            <Icon className="size-5" aria-hidden />
+            <Icon className="size-5 shrink-0" strokeWidth={2.25} aria-hidden />
             <span className="text-left leading-tight">
-              <span className="block font-semibold">{m.label}</span>
+              <span className="block text-[15px] font-bold">{m.label}</span>
               <span className={cn("font-numeral block text-xs tabular-nums", isActive ? "opacity-85" : "opacity-70")}>
                 {m.duration}m round
               </span>
