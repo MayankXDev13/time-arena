@@ -152,6 +152,10 @@ export const api = {
     });
   },
 
+  seedCategories(): Promise<{ seeded: boolean }> {
+    return req("/api/categories/seed", { method: "POST" });
+  },
+
   updateCategory(
     id: string,
     input: { name: string; color: string },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, qk } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
@@ -42,38 +42,29 @@ export default function CategoriesPage() {
   const [editName, setEditName] = useState("");
   const [editColor, setEditColor] = useState("");
 
-  const [defaultsCreated, setDefaultsCreated] = useState(false);
-
+  // Synchronous guard: flips the instant seeding starts, so re-runs of
+  // this effect (mutation-state churn, StrictMode, HMR) can't fan out
+  // into duplicate seed batches while the first request is in flight.
+  const seedStarted = useRef(false);
 
   useEffect(() => {
     if (!user?.id) return;
     if (categories === undefined) return;
     if (categories.length > 0) return;
-    if (defaultsCreated) return;
+    if (seedStarted.current) return;
+    seedStarted.current = true;
 
-    const createDefaults = async () => {
-      try {
-        const defaults = [
-          { name: "Other", color: "bg-gray-500" },
-          { name: "Work", color: "bg-blue-500" },
-          { name: "Study", color: "bg-green-500" },
-        ];
-
-        for (const cat of defaults) {
-          await createCategory.mutateAsync({
-            name: cat.name,
-            color: cat.color,
-          });
-        }
-
-        setDefaultsCreated(true);
-      } catch (err) {
-        console.error("Failed to create default categories:", err);
-      }
-    };
-
-    createDefaults();
-  }, [user?.id, categories, defaultsCreated, createCategory]);
+    api
+      .seedCategories()
+      .then(() =>
+        queryClient.invalidateQueries({ queryKey: qk.categories }),
+      )
+      .catch((err) => {
+        // Genuine failure: allow a later run to retry.
+        seedStarted.current = false;
+        console.error("Failed to seed default categories:", err);
+      });
+  }, [user?.id, categories, queryClient]);
 
   const handleCreate = async () => {
     if (!user?.id || !newCategoryName.trim()) return;
