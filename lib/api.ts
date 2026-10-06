@@ -200,4 +200,5 @@ export const qk = {
   categories: ["categories"] as const,
   settings: ["settings"] as const,
   profile: ["profile"] as const,
+  linkedAccounts: ["linkedAccounts"] as const,
 };

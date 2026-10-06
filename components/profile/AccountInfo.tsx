@@ -2,24 +2,23 @@
 
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useLinkedAccounts } from "@/hooks/useLinkedAccounts";
 import { authClient } from "@/lib/auth-client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Github, Key, Trash2, AlertTriangle, Mail } from "lucide-react";
+import { Github, Key, Mail } from "lucide-react";
 
 export function AccountInfo() {
   const { user } = useAuth();
+  const { oauthProvider, hasPasswordAccount } = useLinkedAccounts();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>("");
-
-  const isOAuth = user?.email?.includes("github") || user?.email?.includes("google");
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,25 +51,14 @@ export function AccountInfo() {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    setIsLoading(true);
-    try {
-      await authClient.deleteUser({
-        callbackURL: "/",
-      });
-    } catch (err) {
-      setIsLoading(false);
-    }
-  };
-
   const getProviderIcon = () => {
-    if (user?.email?.includes("github")) return <Github className="w-5 h-5" />;
+    if (oauthProvider === "github") return <Github className="w-5 h-5" />;
     return <Mail className="w-5 h-5" />;
   };
 
   const getProviderName = () => {
-    if (user?.email?.includes("github")) return "GitHub";
-    if (user?.email?.includes("google")) return "Google";
+    if (oauthProvider === "github") return "GitHub";
+    if (oauthProvider === "google") return "Google";
     return "Email";
   };
 
@@ -95,7 +83,7 @@ export function AccountInfo() {
             </div>
           </div>
 
-          {!isOAuth && (
+          {hasPasswordAccount && (
             <>
               <Separator />
               <div className="flex items-center justify-between">
@@ -113,25 +101,10 @@ export function AccountInfo() {
             </>
           )}
 
-          <Separator />
-
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="w-5 h-5" />
-              <span className="font-medium">Danger Zone</span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Permanently delete your account and all of your data. This action cannot be undone.
-            </p>
-            <Button variant="destructive" onClick={() => setShowDeleteModal(true)}>
-              <Trash2 className="w-4 h-4 mr-2" />
-              Delete Account
-            </Button>
-          </div>
         </CardContent>
       </Card>
 
-      {showPasswordModal && (
+      {showPasswordModal && hasPasswordAccount && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <Card className="w-full max-w-md mx-4">
             <CardHeader>
@@ -201,37 +174,6 @@ export function AccountInfo() {
         </div>
       )}
 
-      {showDeleteModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-md mx-4">
-            <CardHeader>
-              <CardTitle className="text-destructive">Delete Account</CardTitle>
-              <CardDescription>
-                This will permanently delete your account and all of your data including:
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 mb-4">
-                <li>All focus sessions and statistics</li>
-                <li>All categories and settings</li>
-                <li>Your profile and preferences</li>
-                <li>Your streak history</li>
-              </ul>
-              <div className="bg-destructive/10 p-3 rounded-lg text-sm text-destructive mb-4">
-                This action cannot be undone. You will be signed out immediately.
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setShowDeleteModal(false)}>
-                  Cancel
-                </Button>
-                <Button variant="destructive" onClick={handleDeleteAccount} disabled={isLoading}>
-                  {isLoading ? "Deleting..." : "Delete Account"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </>
   );
 }
