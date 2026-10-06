@@ -1,8 +1,7 @@
 import { useCallback } from 'react';
 import { useSessionStore } from '@/stores/useSessionStore';
 import type { Session } from '@/types';
-import { api } from '@/convex/_generated/api';
-import { useConvex } from 'convex/react';
+import { api } from '@/lib/api';
 
 interface SessionData {
   id: string;
@@ -14,7 +13,6 @@ interface SessionData {
 }
 
 export function useSessions() {
-  const convex = useConvex();
   const { sessions, addSession, updateSession, removeSession, setSessions } =
     useSessionStore();
 
@@ -42,9 +40,9 @@ export function useSessions() {
   const deleteSession = useCallback(
     async (id: string) => {
       removeSession(id);
-      await convex.mutation(api.sessions.remove, { id: id as any });
+      await api.deleteSession(id);
     },
-    [removeSession, convex]
+    [removeSession]
   );
 
   const loadSessions = useCallback(

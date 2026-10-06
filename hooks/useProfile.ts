@@ -1,22 +1,39 @@
-import { useMutation, useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
+"use client";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { api, qk } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useCallback } from "react";
-import type { Id } from "@/convex/_generated/dataModel";
 
 export function useProfile() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const enabled = !!user?.id;
 
-  const profile = useQuery(api.users.getProfile, user?.id ? { userId: user.id } : "skip");
-  const settings = useQuery(api.users.getSettings, user?.id ? { userId: user.id } : "skip");
-  const avatarUrl = useQuery(
-    api.users.getAvatarUrl,
-    profile?.profile?.avatarStorageId ? { storageId: profile.profile.avatarStorageId } : "skip"
-  );
+  const profileQuery = useQuery({
+    queryKey: qk.profile,
+    queryFn: api.getProfile,
+    enabled,
+  });
+  const settingsQuery = useQuery({
+    queryKey: qk.settings,
+    queryFn: api.getSettings,
+    enabled,
+  });
 
-  const updateSettings = useMutation(api.users.updateSettings);
-  const updateProfile = useMutation(api.users.updateProfile);
-  const updateAvatar = useMutation(api.users.updateAvatar);
+  const invalidate = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: qk.profile });
+    queryClient.invalidateQueries({ queryKey: qk.settings });
+  }, [queryClient]);
+
+  const settingsMutation = useMutation({
+    mutationFn: api.updateSettings,
+    onSuccess: invalidate,
+  });
+  const bioMutation = useMutation({
+    mutationFn: (bio: string) => api.updateProfile({ bio }),
+    onSuccess: invalidate,
+  });
 
   const updateSettingsAsync = useCallback(
     async (updates: {
@@ -28,35 +45,25 @@ export function useProfile() {
       theme?: string;
     }) => {
       if (!user?.id) return;
-      await updateSettings({ userId: user.id, ...updates });
+      await settingsMutation.mutateAsync(updates);
     },
-    [user, updateSettings]
+    [user, settingsMutation]
   );
 
   const updateBio = useCallback(
     async (bio: string) => {
       if (!user?.id) return;
-      await updateProfile({ userId: user.id, bio });
+      await bioMutation.mutateAsync(bio);
     },
-    [user, updateProfile]
-  );
-
-  const uploadAvatar = useCallback(
-    async (storageId: string) => {
-      if (!user?.id) return;
-      await updateAvatar({ userId: user.id, avatarStorageId: storageId as Id<"_storage"> });
-    },
-    [user, updateAvatar]
+    [user, bioMutation]
   );
 
   return {
     user,
-    profile,
-    settings,
-    avatarUrl,
+    profile: profileQuery.data?.profile ?? undefined,
+    settings: settingsQuery.data ?? undefined,
     updateSettings: updateSettingsAsync,
     updateBio,
-    uploadAvatar,
-    isLoading: profile === undefined || settings === undefined,
+    isLoading: profileQuery.isLoading || settingsQuery.isLoading,
   };
 }

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { api, qk } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useSidebarStore } from "@/stores/useSidebarStore";
 import { Button } from "@/components/ui/button";
@@ -12,10 +12,28 @@ import { Plus, Trash2, Edit2, Check, X } from "lucide-react";
 export default function CategoriesPage() {
   const { user } = useAuth();
   const { isOpen } = useSidebarStore();
-  const categories = useQuery(api.categories.list, user?.id ? { userId: user.id as any } : "skip");
-  const createCategory = useMutation(api.categories.create);
-  const updateCategory = useMutation(api.categories.update);
-  const deleteCategory = useMutation(api.categories.remove);
+  const queryClient = useQueryClient();
+  const { data: categories } = useQuery({
+    queryKey: qk.categories,
+    queryFn: api.listCategories,
+    enabled: !!user?.id,
+  });
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: qk.categories });
+  const createCategory = useMutation({
+    mutationFn: (input: { name: string; color: string }) =>
+      api.createCategory(input),
+    onSuccess: invalidate,
+  });
+  const updateCategory = useMutation({
+    mutationFn: (input: { id: string; name: string; color: string }) =>
+      api.updateCategory(input.id, { name: input.name, color: input.color }),
+    onSuccess: invalidate,
+  });
+  const deleteCategory = useMutation({
+    mutationFn: (id: string) => api.deleteCategory(id),
+    onSuccess: invalidate,
+  });
 
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryColor, setNewCategoryColor] = useState(COLOR_OPTIONS[0].value);
@@ -41,8 +59,7 @@ export default function CategoriesPage() {
         ];
 
         for (const cat of defaults) {
-          await createCategory({
-            userId: user.id as any,
+          await createCategory.mutateAsync({
             name: cat.name,
             color: cat.color,
           });
@@ -60,8 +77,7 @@ export default function CategoriesPage() {
   const handleCreate = async () => {
     if (!user?.id || !newCategoryName.trim()) return;
 
-    await createCategory({
-      userId: user.id as any,
+    await createCategory.mutateAsync({
       name: newCategoryName.trim(),
       color: newCategoryColor,
     });
@@ -71,7 +87,7 @@ export default function CategoriesPage() {
   };
 
   const handleEdit = (category: any) => {
-    setEditingId(category._id);
+    setEditingId(category.id);
     setEditName(category.name);
     setEditColor(category.color);
   };
@@ -79,8 +95,8 @@ export default function CategoriesPage() {
   const handleSaveEdit = async () => {
     if (!editingId) return;
 
-    await updateCategory({
-      id: editingId as any,
+    await updateCategory.mutateAsync({
+      id: editingId,
       name: editName.trim(),
       color: editColor,
     });
@@ -89,7 +105,7 @@ export default function CategoriesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    await deleteCategory({ id: id as any });
+    await deleteCategory.mutateAsync(id);
   };
 
   return (
@@ -131,8 +147,8 @@ export default function CategoriesPage() {
           <h2 className="text-lg font-semibold text-card-foreground mb-4">Your Categories</h2>
           <div className="space-y-3">
             {categories?.map((category: any) => (
-              <div key={category._id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                {editingId === category._id ? (
+              <div key={category.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                {editingId === category.id ? (
                   <div className="flex items-center gap-3 flex-1">
                     <input
                       type="text"
@@ -168,7 +184,7 @@ export default function CategoriesPage() {
                       <Button size="sm" variant="outline" onClick={() => handleEdit(category)}>
                         <Edit2 className="w-4 h-4" />
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => handleDelete(category._id)}>
+                      <Button size="sm" variant="outline" onClick={() => handleDelete(category.id)}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>

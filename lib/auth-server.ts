@@ -1,14 +1,11 @@
-import { convexBetterAuthNextJs } from "@convex-dev/better-auth/nextjs";
+import { headers } from "next/headers";
+import { toNextJsHandler } from "better-auth/next-js";
+import { auth } from "@/lib/auth";
 
-export const {
-  handler,
-  preloadAuthQuery,
-  isAuthenticated,
-  getToken,
-  fetchAuthQuery,
-  fetchAuthMutation,
-  fetchAuthAction,
-} = convexBetterAuthNextJs({
-  convexUrl: process.env.NEXT_PUBLIC_CONVEX_URL!,
-  convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
-});
+export const handler = toNextJsHandler(auth);
+
+export async function getSession() {
+  return auth.api.getSession({
+    headers: await headers(),
+  });
+}

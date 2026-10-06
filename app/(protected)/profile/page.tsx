@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
+import { useQuery } from "@tanstack/react-query";
+import { api, qk } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useSidebarStore } from "@/stores/useSidebarStore";
 import { useThemeSync } from "@/hooks/useThemeSync";
@@ -22,11 +22,16 @@ export default function ProfilePage() {
   
   useThemeSync();
 
-  const stats = useQuery(api.sessions.getStats, user?.id ? { userId: user.id as any } : "skip");
-  const contribution = useQuery(
-    api.sessions.getContributionGraph,
-    user?.id ? { userId: user.id, year: selectedYear } : "skip"
-  );
+  const { data: stats } = useQuery({
+    queryKey: qk.stats,
+    queryFn: api.getStats,
+    enabled: !!user?.id,
+  });
+  const { data: contribution } = useQuery({
+    queryKey: qk.contributions(selectedYear),
+    queryFn: () => api.getContributions(selectedYear),
+    enabled: !!user?.id,
+  });
 
   if (!isAuthenticated || !user) {
     return null;

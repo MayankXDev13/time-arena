@@ -5,7 +5,7 @@ import { TrendingUp, TrendingDown, Minus, Trophy } from "lucide-react";
 
 interface CategoryStatsCardProps {
   category: {
-    _id: string;
+    id: string;
     name: string;
     color: string;
   };
