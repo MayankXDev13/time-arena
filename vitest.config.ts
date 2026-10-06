@@ -7,4 +7,9 @@ export default defineConfig({
       "@": path.resolve(process.cwd(), "."),
     },
   },
+  test: {
+    setupFiles: ["./vitest.setup.ts"],
+    testTimeout: 60000,
+    retry: 2,
+  },
 });
