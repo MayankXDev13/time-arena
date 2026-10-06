@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
+import { useQuery } from "@tanstack/react-query";
+import { api, qk } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { ChevronDown, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -33,10 +33,11 @@ export function CategoryDropdown({
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
 
-  const categories = useQuery(
-    api.categories.list,
-    user?.id ? { userId: user.id as any } : "skip"
-  );
+  const { data: categories } = useQuery({
+    queryKey: qk.categories,
+    queryFn: api.listCategories,
+    enabled: !!user?.id,
+  });
 
 
   useEffect(() => {
@@ -45,12 +46,12 @@ export function CategoryDropdown({
         (c: any) => c.name?.toLowerCase() === "other"
       );
 
-      onSelect(otherCategory?._id ?? categories[0]._id);
+      onSelect(otherCategory?.id ?? categories[0].id);
     }
   }, [autoSelectDefault, selectedCategoryId, categories, onSelect]);
 
   const selectedCategory = categories?.find(
-    (cat: any) => cat._id === selectedCategoryId
+    (cat: any) => cat.id === selectedCategoryId
   );
 
   const handleSelect = (categoryId?: string) => {
@@ -94,15 +95,15 @@ export function CategoryDropdown({
     
           {categories?.map((category: any) => (
             <button
-              key={category._id}
+              key={category.id}
               type="button"
-              onClick={() => handleSelect(category._id)}
+              onClick={() => handleSelect(category.id)}
               className="w-full px-3 py-2 text-left hover:bg-accent flex items-center space-x-2"
             >
               <div className={`w-3 h-3 rounded-full ${category.color}`} />
               <span>{category.name}</span>
 
-              {selectedCategoryId === category._id && (
+              {selectedCategoryId === category.id && (
                 <Check className="w-4 h-4 ml-auto" />
               )}
             </button>

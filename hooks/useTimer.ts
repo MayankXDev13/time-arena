@@ -1,11 +1,10 @@
 "use client"
 import { useCallback, useRef, useEffect } from 'react';
-import { useMutation } from 'convex/react';
-import { api } from '@/convex/_generated/api';
+import { useQueryClient } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { useTimerStore, TimerMode } from '@/stores/useTimerStore';
 import { showTimerNotification, getCompletedNotification, requestNotificationPermission } from '@/utils/notifications';
-import { useTimerSync } from './useTimerSync';
 
 export function useTimer() {
   const {
@@ -28,14 +27,14 @@ export function useTimer() {
   const notifiedRef = useRef(false);
   const startTimeRef = useRef<number>(0);
   const { user } = useAuth();
-  const createSessionMutation = useMutation(api.sessions.create);
-  const updateSessionMutation = useMutation(api.sessions.update);
-  const endSessionMutation = useMutation(api.sessions.endSession);
-  const { restoreFromSupabase } = useTimerSync();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    restoreFromSupabase();
-  }, [restoreFromSupabase]);
+  const invalidateSessionQueries = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["history"] });
+    queryClient.invalidateQueries({ queryKey: ["recent"] });
+    queryClient.invalidateQueries({ queryKey: ["stats"] });
+    queryClient.invalidateQueries({ queryKey: ["contributions"] });
+  }, [queryClient]);
 
   const clearIntervalRef = useCallback(() => {
     if (intervalRef.current) {
@@ -59,9 +58,8 @@ export function useTimer() {
     notifiedRef.current = false;
 
     const startTime = Date.now();
-    const sessionId = await createSessionMutation({
-      userId: user.id as any,
-      categoryId: selectedCategoryId as any,
+    const { id: newSessionId } = await api.createSession({
+      categoryId: selectedCategoryId ?? null,
       start: startTime,
       duration: 0,
       mode,
@@ -80,7 +78,7 @@ export function useTimer() {
           isRunning: true,
           actualElapsed: currentActualElapsed,
           elapsed: currentActualElapsed,
-          sessionId,
+          sessionId: newSessionId,
           lastStartTime: startTimeRef.current,
           isCompleted: completed,
         });
@@ -92,7 +90,7 @@ export function useTimer() {
     }, 500);
 
     requestNotificationPermission();
-  }, [user?.id, selectedCategoryId, mode, createSessionMutation, setTimer, clearIntervalRef, checkCompletion, targetDuration]);
+  }, [user?.id, selectedCategoryId, mode, setTimer, clearIntervalRef, checkCompletion, targetDuration]);
 
   const pause = useCallback(() => {
     clearIntervalRef();
@@ -138,11 +136,11 @@ export function useTimer() {
     const duration = actualElapsed;
 
     if (sessionId) {
-      await endSessionMutation({
-        id: sessionId as any,
+      await api.endSession(sessionId, {
         endedAt: endTime,
         duration,
       });
+      invalidateSessionQueries();
     }
 
     setTimer({
@@ -153,7 +151,7 @@ export function useTimer() {
       lastStartTime: null,
       isCompleted: false,
     });
-  }, [sessionId, actualElapsed, endSessionMutation, setTimer, clearIntervalRef]);
+  }, [sessionId, actualElapsed, setTimer, clearIntervalRef, invalidateSessionQueries]);
 
   const reset = useCallback(async () => {
     clearIntervalRef();
@@ -162,11 +160,11 @@ export function useTimer() {
     // Save current session if it exists and has elapsed time
     if (sessionId && actualElapsed > 0) {
       const endTime = Date.now();
-      await endSessionMutation({
-        id: sessionId as any,
+      await api.endSession(sessionId, {
         endedAt: endTime,
         duration: actualElapsed,
       });
+      invalidateSessionQueries();
     }
 
     // Reset state
@@ -181,7 +179,7 @@ export function useTimer() {
 
     // Start new session with same category
     await start();
-  }, [setTimer, clearIntervalRef, sessionId, actualElapsed, endSessionMutation, start]);
+  }, [setTimer, clearIntervalRef, sessionId, actualElapsed, start, invalidateSessionQueries]);
 
   useEffect(() => {
     return () => {

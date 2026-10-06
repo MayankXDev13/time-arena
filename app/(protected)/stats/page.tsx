@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { api, qk } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useSidebarStore } from "@/stores/useSidebarStore";
 import { Button } from "@/components/ui/button";
@@ -20,28 +20,48 @@ export default function StatsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editCategoryId, setEditCategoryId] = useState<string | undefined>();
 
-  const sessions = useQuery(
-    api.sessions.getRecent,
-    user?.id
-      ? { userId: user.id as any, limit: 50, categoryId: selectedCategoryId as any }
-      : "skip"
-  );
-  const categories = useQuery(api.categories.list, user?.id ? { userId: user.id as any } : "skip");
-  const updateSession = useMutation(api.sessions.update);
-  const deleteSession = useMutation(api.sessions.remove);
-  const stats = useQuery(api.sessions.getStats, user?.id ? { userId: user.id as any } : "skip");
+  const queryClient = useQueryClient();
+  const { data: sessions } = useQuery({
+    queryKey: qk.recent(50, selectedCategoryId),
+    queryFn: () => api.getRecent(50, selectedCategoryId),
+    enabled: !!user?.id,
+  });
+  const { data: categories } = useQuery({
+    queryKey: qk.categories,
+    queryFn: api.listCategories,
+    enabled: !!user?.id,
+  });
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ["recent"] });
+    queryClient.invalidateQueries({ queryKey: ["history"] });
+    queryClient.invalidateQueries({ queryKey: ["stats"] });
+  };
+  const updateSession = useMutation({
+    mutationFn: (input: { id: string; categoryId?: string }) =>
+      api.updateSession(input.id, { categoryId: input.categoryId ?? null }),
+    onSuccess: invalidate,
+  });
+  const deleteSession = useMutation({
+    mutationFn: (id: string) => api.deleteSession(id),
+    onSuccess: invalidate,
+  });
+  const { data: stats } = useQuery({
+    queryKey: qk.stats,
+    queryFn: api.getStats,
+    enabled: !!user?.id,
+  });
 
   const handleEdit = (session: any) => {
-    setEditingId(session._id);
-    setEditCategoryId(session.categoryId);
+    setEditingId(session.id);
+    setEditCategoryId(session.categoryId ?? undefined);
   };
 
   const handleSave = async () => {
     if (!editingId) return;
 
-    await updateSession({
-      id: editingId as any,
-      categoryId: editCategoryId as any,
+    await updateSession.mutateAsync({
+      id: editingId,
+      categoryId: editCategoryId,
     });
 
     setEditingId(null);
@@ -56,9 +76,9 @@ export default function StatsPage() {
     return `${minutes}m`;
   };
 
-  const getCategoryName = (categoryId?: string) => {
+  const getCategoryName = (categoryId?: string | null) => {
     if (!categoryId) return "Uncategorized";
-    const category = categories?.find((cat: any) => cat._id === categoryId);
+    const category = categories?.find((cat: any) => cat.id === categoryId);
     return category?.name || "Unknown";
   };
 
@@ -228,7 +248,7 @@ export default function StatsPage() {
                   .slice(0, 8);
 
                 return sortedCategories.map((categoryStat, index) => {
-                  const category = categories?.find((cat: any) => cat._id === categoryStat.categoryId);
+                  const category = categories?.find((cat: any) => cat.id === categoryStat.categoryId);
                   if (!category) return null;
 
                   return (
@@ -291,8 +311,8 @@ export default function StatsPage() {
           </div>
           <div className="divide-y divide-border">
             {filteredSessions?.map((session: any) => (
-              <div key={session._id} className="p-4">
-                {editingId === session._id ? (
+              <div key={session.id} className="p-4">
+                {editingId === session.id ? (
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4 flex-1">
                       <span className="text-sm text-muted-foreground">
@@ -335,7 +355,7 @@ export default function StatsPage() {
                       <Button size="sm" variant="outline" onClick={() => handleEdit(session)}>
                         <Edit2 className="w-4 h-4" />
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => deleteSession({ id: session._id as any })}>
+                      <Button size="sm" variant="outline" onClick={() => deleteSession.mutateAsync(session.id)}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>

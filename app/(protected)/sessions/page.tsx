@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { api, qk } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useSidebarStore } from "@/stores/useSidebarStore";
 import { useThemeSync } from "@/hooks/useThemeSync";
@@ -36,11 +36,11 @@ import {
 import { formatTime } from "@/lib/constants";
 
 interface Session {
-  _id: string;
+  id: string;
   start: number;
   duration: number;
   mode: "work" | "break";
-  categoryId?: string;
+  categoryId?: string | null;
 }
 
 export default function SessionsPage() {
@@ -56,17 +56,17 @@ export default function SessionsPage() {
   
   useThemeSync();
 
-  const sessions = useQuery(
-    api.sessions.getHistory,
-    user?.id
-      ? {
-          userId: user.id,
-          limit: 10,
-          cursor: cursors[page],
-          categoryId: categoryFilter as any,
-        }
-      : "skip"
-  );
+  const queryClient = useQueryClient();
+  const historyParams = {
+    limit: 10,
+    cursor: cursors[page],
+    categoryId: categoryFilter,
+  };
+  const { data: sessions } = useQuery({
+    queryKey: qk.history(historyParams),
+    queryFn: () => api.getHistory(historyParams),
+    enabled: !!user?.id,
+  });
 
   // Update cursors when we get new data
   useEffect(() => {
@@ -75,8 +75,25 @@ export default function SessionsPage() {
     }
   }, [sessions?.nextCursor]);
 
-  const deleteSession = useMutation(api.sessions.remove);
-  const updateSession = useMutation(api.sessions.update);
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: ["history"] });
+  const deleteSession = useMutation({
+    mutationFn: (id: string) => api.deleteSession(id),
+    onSuccess: invalidate,
+  });
+  const updateSession = useMutation({
+    mutationFn: (input: {
+      id: string;
+      categoryId?: string;
+      duration: number;
+      mode: "work" | "break";
+    }) => api.updateSession(input.id, {
+      categoryId: input.categoryId ?? null,
+      duration: input.duration,
+      mode: input.mode,
+    }),
+    onSuccess: invalidate,
+  });
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString("en-US", {
@@ -94,12 +111,12 @@ export default function SessionsPage() {
   };
 
   const handleDelete = async (sessionId: string) => {
-    await deleteSession({ id: sessionId as any });
+    await deleteSession.mutateAsync(sessionId);
   };
 
   const handleEdit = (session: Session) => {
     setEditingSession(session);
-    setEditCategoryId(session.categoryId);
+    setEditCategoryId(session.categoryId ?? undefined);
     setEditDuration(Math.floor(session.duration / 60));
     setEditMode(session.mode);
   };
@@ -107,9 +124,9 @@ export default function SessionsPage() {
   const handleUpdate = async () => {
     if (!editingSession) return;
     
-    await updateSession({
-      id: editingSession._id as any,
-      categoryId: editCategoryId as any,
+    await updateSession.mutateAsync({
+      id: editingSession.id,
+      categoryId: editCategoryId,
       duration: editDuration * 60,
       mode: editMode,
     });
@@ -184,7 +201,7 @@ export default function SessionsPage() {
               {sessions?.page && sessions.page.length > 0 ? (
                 sessions.page.map((session: any) => (
                   <div 
-                    key={session._id} 
+                    key={session.id} 
                     className="group grid grid-cols-[110px_100px_100px_1fr_auto] items-center gap-4 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
                   >
                     {/* Date & Time */}
@@ -243,7 +260,7 @@ export default function SessionsPage() {
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => handleDelete(session._id)}
+                        onClick={() => handleDelete(session.id)}
                         className="h-8 px-2"
                       >
                         <Trash2 className="w-4 h-4 mr-1" />
@@ -354,9 +371,13 @@ export default function SessionsPage() {
   );
 }
 
-function CategoryBadge({ categoryId }: { categoryId?: string }) {
+function CategoryBadge({ categoryId }: { categoryId?: string | null }) {
   const { user } = useAuth();
-  const categories = useQuery(api.categories.list, user?.id ? { userId: user.id as any } : "skip");
+  const { data: categories } = useQuery({
+    queryKey: qk.categories,
+    queryFn: api.listCategories,
+    enabled: !!user?.id,
+  });
 
   if (!categories) return <span className="text-sm text-muted-foreground">-</span>;
 
@@ -369,7 +390,7 @@ function CategoryBadge({ categoryId }: { categoryId?: string }) {
     );
   }
 
-  const category = categories.find((cat: any) => cat._id === categoryId);
+  const category = categories.find((cat: any) => cat.id === categoryId);
   if (!category) {
     return (
       <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-muted/50 w-fit">

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
+import { useQuery } from "@tanstack/react-query";
+import { api, qk } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useThemeStore } from "@/stores/useThemeStore";
 
@@ -10,7 +10,11 @@ export function useThemeSync() {
   const { user } = useAuth();
   const { setTheme } = useThemeStore();
 
-  const settings = useQuery(api.users.getSettings, user?.id ? { userId: user.id } : "skip");
+  const { data: settings } = useQuery({
+    queryKey: qk.settings,
+    queryFn: api.getSettings,
+    enabled: !!user?.id,
+  });
 
   useEffect(() => {
     if (settings?.theme) {

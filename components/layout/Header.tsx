@@ -1,14 +1,18 @@
 "use client";
 import Link from "next/link";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
+import { useQuery } from "@tanstack/react-query";
+import { api, qk } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function Header() {
   const { user } = useAuth();
-  const stats = useQuery(api.sessions.getStats, user?.id ? { userId: user.id as any } : "skip");
+  const { data: stats } = useQuery({
+    queryKey: qk.stats,
+    queryFn: api.getStats,
+    enabled: !!user?.id,
+  });
 
   return (
     <header className="h-16 bg-background border-b border-border flex items-center justify-between px-6 fixed top-0 left-0 md:left-64 right-0 z-30">
