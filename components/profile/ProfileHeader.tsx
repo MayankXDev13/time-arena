@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/hooks/useAuth";
+import { useLinkedAccounts } from "@/hooks/useLinkedAccounts";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatTime } from "@/lib/constants";
 import { Mail } from "lucide-react";
@@ -15,8 +16,16 @@ interface ProfileHeaderProps {
 
 export function ProfileHeader({ stats }: ProfileHeaderProps) {
   const { user } = useAuth();
+  const { oauthProvider } = useLinkedAccounts();
 
-  const isOAuth = user?.email?.includes("github") || user?.email?.includes("google");
+  const oauthLabel =
+    oauthProvider === "github"
+      ? "GitHub"
+      : oauthProvider === "google"
+        ? "Google"
+        : oauthProvider
+          ? oauthProvider[0].toUpperCase() + oauthProvider.slice(1)
+          : null;
 
   return (
     <Card>
@@ -44,9 +53,9 @@ export function ProfileHeader({ stats }: ProfileHeaderProps) {
           <div className="flex items-center gap-2 text-muted-foreground mt-1">
             <Mail className="w-4 h-4" />
             <span className="text-sm truncate">{user?.email}</span>
-            {isOAuth && (
+            {oauthLabel && (
               <span className="text-xs px-2 py-0.5 bg-secondary rounded-full">
-                {user?.email?.includes("github") ? "GitHub" : "Google"}
+                {oauthLabel}
               </span>
             )}
           </div>
