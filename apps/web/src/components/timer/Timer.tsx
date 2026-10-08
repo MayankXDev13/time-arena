@@ -5,6 +5,7 @@ import { TimerControls } from './TimerControls';
 import { TimerModeSelector } from './TimerModeSelector';
 import { CategoryDropdown } from '@/components/CategoryDropdown';
 import { useTimer } from '@/hooks/useTimer';
+import { useTimerDocumentTitle } from '@/hooks/useTimerDocumentTitle';
 import { useTimerStore } from '@/stores/useTimerStore';
 import { Minus, Plus, Timer as TimerIcon, Coffee } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,15 +28,17 @@ function DurationStepper({
   max?: number;
 }) {
   return (
-    <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-muted/50 px-3 py-2.5">
-      <div className="flex min-w-0 items-center gap-2">
-        <Icon className="size-5 shrink-0 text-primary" strokeWidth={2.25} aria-hidden />
-        <div className="leading-tight">
-          <p className="text-[13px] font-bold text-foreground">{label}</p>
-          <p className="font-numeral text-[11px] tabular-nums text-muted-foreground">min per round</p>
+    <div className="flex min-w-0 flex-col gap-2.5 rounded-2xl border border-border bg-muted/40 px-3.5 py-3">
+      <div className="flex min-w-0 items-center gap-2.5">
+        <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-card ring-1 ring-border">
+          <Icon className="size-4 shrink-0 text-primary" strokeWidth={2.25} aria-hidden />
+        </span>
+        <div className="min-w-0 leading-tight">
+          <p className="font-display text-[13px] font-extrabold uppercase tracking-wide text-foreground">{label}</p>
+          <p className="font-numeral text-[11px] tabular-nums text-muted-foreground">min / round</p>
         </div>
       </div>
-      <div className="flex shrink-0 items-center gap-0.5 rounded-full border border-border bg-card px-1 py-0.5">
+      <div className="flex w-full items-center justify-between rounded-full border border-border bg-card px-1 py-0.5 shadow-sm">
         <Button
           variant="ghost"
           size="icon"
@@ -46,7 +49,7 @@ function DurationStepper({
         >
           <Minus className="size-3.5" />
         </Button>
-        <span className="font-numeral w-9 text-center text-[13px] font-bold tabular-nums">{value}m</span>
+        <span className="font-numeral text-[13px] font-bold tabular-nums">{value}m</span>
         <Button
           variant="ghost"
           size="icon"
@@ -63,7 +66,8 @@ function DurationStepper({
 }
 
 export function Timer() {
-  const { start, pause, resume, stop, reset } = useTimer();
+  const { start, pause, resume, stop, reset, isStarting } = useTimer();
+  useTimerDocumentTitle();
   const {
     isRunning, elapsed, isCompleted, mode,
     workDuration, breakDuration,
@@ -83,20 +87,21 @@ export function Timer() {
       }
       if (e.code === "Space") {
         e.preventDefault();
+        if (e.repeat || isStarting) return;
         if (isCompleted) void reset();
         else if (isRunning) pause();
         else if (elapsed === 0) void start();
         else resume();
-      } else if (e.key === "r" || e.key === "R") {
+      } else if ((e.key === "r" || e.key === "R") && !e.repeat && !isStarting) {
         void reset();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [isRunning, isCompleted, elapsed, start, pause, resume, reset]);
+  }, [isRunning, isCompleted, elapsed, isStarting, start, pause, resume, reset]);
 
   return (
-    <div className="flex w-full flex-col items-center gap-6">
+    <div className="timer-stack flex w-full flex-col items-center gap-5">
       <TimerModeSelector />
 
       <TimerDisplay
@@ -110,14 +115,14 @@ export function Timer() {
 
       <div className="grid w-full max-w-[460px] gap-2.5">
         <div>
-          <p id="timer-category-label" className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+          <p id="timer-category-label" className="eyebrow mb-2 text-muted-foreground">
             Fighting for
           </p>
           <CategoryDropdown
             selectedCategoryId={selectedCategoryId}
             onSelect={setSelectedCategoryId}
             className="w-full"
-            disabled={isRunning}
+            disabled={isRunning || isStarting}
           />
         </div>
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
@@ -126,27 +131,30 @@ export function Timer() {
             icon={TimerIcon}
             value={workDuration}
             onChange={setWorkDuration}
-            disabled={isRunning}
+            disabled={isRunning || isStarting}
           />
           <DurationStepper
             label="Break"
             icon={Coffee}
             value={breakDuration}
             onChange={setBreakDuration}
-            disabled={isRunning}
+            disabled={isRunning || isStarting}
             min={1}
             max={60}
           />
         </div>
-        {isRunning && (
-          <p className="text-center text-xs text-muted-foreground">
-            Category and round length lock while the clock runs.
-          </p>
-        )}
+        {/* Reserved line: invisible while idle so starting the clock never shifts layout. */}
+        <p
+          aria-hidden={!isRunning}
+          className={`text-center text-xs text-muted-foreground ${isRunning ? "" : "invisible select-none"}`}
+        >
+          Category and round length lock while the clock runs.
+        </p>
       </div>
 
       <TimerControls
         isRunning={isRunning}
+        isStarting={isStarting}
         elapsed={elapsed}
         isCompleted={isCompleted}
         start={start}

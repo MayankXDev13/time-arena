@@ -10,6 +10,7 @@ import { showTimerNotification, getCompletedNotification, requestNotificationPer
 export function useTimer() {
   const {
     isRunning,
+    isStarting,
     elapsed,
     actualElapsed,
     sessionId,
@@ -27,6 +28,9 @@ export function useTimer() {
   const elapsedRef = useRef(0);
   const notifiedRef = useRef(false);
   const startTimeRef = useRef<number>(0);
+  const startingRef = useRef(false);
+  // Generation counter: pause/stop/reset bump it to cancel an in-flight start.
+  const flightRef = useRef(0);
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -50,59 +54,95 @@ export function useTimer() {
   }, [mode, targetDuration]);
 
   const start = useCallback(async () => {
-    if (!user?.id) return;
+    if (!user?.id || startingRef.current) return;
+    startingRef.current = true;
+    const flight = ++flightRef.current;
+    // Pending state only: the clock (and Pause) appears once the server
+    // returns the session id. The Start button stays disabled meanwhile.
+    setTimer({ isStarting: true });
 
-    clearIntervalRef();
-    notifiedRef.current = false;
+    try {
+      clearIntervalRef();
+      notifiedRef.current = false;
+      elapsedRef.current = 0;
 
-    const startTime = Date.now();
-    const { id: newSessionId } = await api.createSession({
-      categoryId: selectedCategoryId ?? null,
-      start: startTime,
-      duration: 0,
-      mode,
-    });
+      const startTime = Date.now();
+      const { id: newSessionId } = await api.createSession({
+        categoryId: selectedCategoryId ?? null,
+        start: startTime,
+        duration: 0,
+        mode,
+      });
 
-    startTimeRef.current = Date.now();
+      // Superseded (pause/stop/reset landed mid-flight): abandon this start
+      // so it can't resurrect the timer or leak an interval.
+      if (flight !== flightRef.current) return;
 
-    timeArenaEvents.emit('timer-started', {
-      mode,
-      categoryId: selectedCategoryId ?? null,
-      targetDuration,
-    });
+      startTimeRef.current = Date.now();
 
-    intervalRef.current = setInterval(() => {
-      const currentActualElapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
-      if (currentActualElapsed === elapsedRef.current) return;
-      elapsedRef.current = currentActualElapsed;
-      const completed = currentActualElapsed >= targetDuration;
+      timeArenaEvents.emit('timer-started', {
+        mode,
+        categoryId: selectedCategoryId ?? null,
+        targetDuration,
+      });
 
-      checkCompletion(currentActualElapsed);
-        setTimer({
-          isRunning: true,
-          actualElapsed: currentActualElapsed,
-          elapsed: currentActualElapsed,
-          sessionId: newSessionId,
-          lastStartTime: startTimeRef.current,
-          isCompleted: completed,
-        });
+      // Session id received: the session is live — show Pause/Stop/Reset now,
+      // don't wait for the first tick.
+      setTimer({
+        isRunning: true,
+        elapsed: 0,
+        actualElapsed: 0,
+        sessionId: newSessionId,
+        lastStartTime: startTimeRef.current,
+        isCompleted: false,
+      });
 
-      if (completed) {
-        clearIntervalRef();
-        setTimer({ isRunning: false });
-      }
-    }, 500);
+      intervalRef.current = setInterval(() => {
+        const currentActualElapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+        if (currentActualElapsed === elapsedRef.current) return;
+        elapsedRef.current = currentActualElapsed;
+        const completed = currentActualElapsed >= targetDuration;
 
-    requestNotificationPermission();
+        checkCompletion(currentActualElapsed);
+          setTimer({
+            isRunning: true,
+            actualElapsed: currentActualElapsed,
+            elapsed: currentActualElapsed,
+            sessionId: newSessionId,
+            lastStartTime: startTimeRef.current,
+            isCompleted: completed,
+          });
+
+        if (completed) {
+          clearIntervalRef();
+          setTimer({ isRunning: false });
+        }
+      }, 500);
+
+      requestNotificationPermission();
+    } catch (err) {
+      // Session never started server-side: unlock the UI again.
+      clearIntervalRef();
+      setTimer({ isRunning: false });
+      throw err;
+    } finally {
+      startingRef.current = false;
+      setTimer({ isStarting: false });
+    }
   }, [user?.id, selectedCategoryId, mode, setTimer, clearIntervalRef, checkCompletion, targetDuration]);
 
   const pause = useCallback(() => {
+    flightRef.current += 1;
     clearIntervalRef();
     setTimer({ isRunning: false, lastStartTime: null });
   }, [setTimer, clearIntervalRef]);
 
   const resume = useCallback(() => {
     if (!isRunning && (sessionId || actualElapsed > 0)) {
+      // Kill any live interval first: without this, a double resume orphans
+      // a ticking interval that stop()/pause() can never clear, so the
+      // timer appears unstoppable.
+      clearIntervalRef();
       notifiedRef.current = false;
       startTimeRef.current = Date.now() - actualElapsed * 1000;
       elapsedRef.current = actualElapsed;
@@ -133,33 +173,40 @@ export function useTimer() {
   }, [isRunning, sessionId, actualElapsed, setTimer, checkCompletion, targetDuration]);
 
   const stop = useCallback(async () => {
+    flightRef.current += 1;
     clearIntervalRef();
     notifiedRef.current = false;
 
     const endTime = Date.now();
     const duration = actualElapsed;
 
-    if (sessionId) {
-      await api.endSession(sessionId, {
-        endedAt: endTime,
-        duration,
+    try {
+      if (sessionId) {
+        await api.endSession(sessionId, {
+          endedAt: endTime,
+          duration,
+        });
+        timeArenaEvents.emit('timer-stopped', { mode, duration, completed: false });
+        timeArenaEvents.emit('session-saved', { id: sessionId, mode, duration });
+        invalidateSessionQueries();
+      }
+    } finally {
+      // Always reset local state, even if the save failed: otherwise the UI
+      // stays stuck in "running" with no ticking interval to stop.
+      elapsedRef.current = 0;
+      setTimer({
+        isRunning: false,
+        elapsed: 0,
+        actualElapsed: 0,
+        sessionId: null,
+        lastStartTime: null,
+        isCompleted: false,
       });
-      timeArenaEvents.emit('timer-stopped', { mode, duration, completed: false });
-      timeArenaEvents.emit('session-saved', { id: sessionId, mode, duration });
-      invalidateSessionQueries();
     }
-
-    setTimer({
-      isRunning: false,
-      elapsed: 0,
-      actualElapsed: 0,
-      sessionId: null,
-      lastStartTime: null,
-      isCompleted: false,
-    });
-  }, [sessionId, actualElapsed, setTimer, clearIntervalRef, invalidateSessionQueries]);
+  }, [sessionId, actualElapsed, mode, setTimer, clearIntervalRef, invalidateSessionQueries]);
 
   const reset = useCallback(async () => {
+    flightRef.current += 1;
     clearIntervalRef();
     notifiedRef.current = false;
 
@@ -195,6 +242,7 @@ export function useTimer() {
 
   return {
     isRunning,
+    isStarting,
     elapsed,
     actualElapsed,
     sessionId,

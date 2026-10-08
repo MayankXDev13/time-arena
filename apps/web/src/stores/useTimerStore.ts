@@ -5,6 +5,8 @@ export type TimerMode = "work" | "break";
 
 export interface TimerStore {
     isRunning: boolean;
+    /** A create-session request is in flight; the clock hasn't started yet. */
+    isStarting: boolean;
     elapsed: number;
     actualElapsed: number;
     sessionId: string | null;
@@ -36,6 +38,7 @@ export const useTimerStore = create<TimerStore>()(
     persist(
         (set, get) => ({
             isRunning: false,
+            isStarting: false,
             elapsed: 0,
             actualElapsed: 0,
             sessionId: null,
@@ -56,6 +59,7 @@ export const useTimerStore = create<TimerStore>()(
             reset: () =>
                 set({
                     isRunning: false,
+                    isStarting: false,
                     elapsed: 0,
                     actualElapsed: 0,
                     sessionId: null,
@@ -121,6 +125,8 @@ export const useTimerStore = create<TimerStore>()(
         {
             name: "timer-storage",
             storage: createJSONStorage(() => localStorage),
+            // A reload mid-flight must never restore a stuck "starting" lock.
+            partialize: (state) => ({ ...state, isStarting: false }),
         }
     )
 );

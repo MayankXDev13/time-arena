@@ -103,9 +103,7 @@ export function CategoryStatsCard({
   return (
     <div
       className={cn(
-        "relative group bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl shadow-sm p-4",
-        "transition-all duration-300 hover:shadow-md hover:border-primary/30 hover:bg-card/90",
-        "hover:shadow-[0_0_20px_rgba(225,29,72,0.15)]",
+        "card-lift relative bg-card border border-border/70 rounded-[20px] p-5",
         className
       )}
     >
@@ -115,11 +113,11 @@ export function CategoryStatsCard({
         <div className="flex items-center gap-2.5 min-w-0">
           <div
             className={cn(
-              "w-3 h-3 rounded-full shrink-0 shadow-sm",
+              "size-3 rounded-full shrink-0 ring-1 ring-black/10",
               category.color
             )}
           />
-          <span className="text-sm font-medium text-card-foreground truncate">
+          <span className="truncate text-sm font-bold text-card-foreground">
             {category.name}
           </span>
         </div>
@@ -138,12 +136,12 @@ export function CategoryStatsCard({
         </div>
       </div>
 
-      <div className="flex items-baseline gap-2 mb-1">
-        <span className="text-2xl font-bold text-primary">
+      <div className="flex items-baseline gap-2 mb-2">
+        <span className="font-numeral text-[26px] font-extrabold tabular-nums leading-none text-foreground">
           {formatTime(stats.thisWeek)}
         </span>
-        <span className="text-xs text-muted-foreground">
-          sessions: {stats.sessionCount}
+        <span className="font-numeral text-xs tabular-nums text-muted-foreground">
+          {stats.sessionCount} bouts
         </span>
       </div>
 

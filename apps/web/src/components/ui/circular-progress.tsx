@@ -52,12 +52,12 @@ export function CircularProgress({
 
   const isBreak = mode === "break";
   const glow = isCompleted
-    ? "drop-shadow(0 0 28px color-mix(in srgb, var(--arena-ember) 55%, transparent))"
+    ? "drop-shadow(0 0 32px color-mix(in srgb, var(--arena-ember) 60%, transparent))"
     : isRunning
       ? isBreak
-        ? "drop-shadow(0 0 24px color-mix(in srgb, var(--arena-moss) 50%, transparent))"
-        : "drop-shadow(0 0 24px color-mix(in srgb, var(--arena-ember) 50%, transparent))"
-      : "none";
+        ? "drop-shadow(0 0 26px color-mix(in srgb, var(--arena-moss) 55%, transparent))"
+        : "drop-shadow(0 0 26px color-mix(in srgb, var(--arena-ember) 55%, transparent))"
+      : "drop-shadow(0 0 14px color-mix(in srgb, var(--arena-ember) 18%, transparent))";
 
   return (
     <div
@@ -83,17 +83,19 @@ export function CircularProgress({
             x2={t.x2}
             y2={t.y2}
             stroke="currentColor"
-            strokeWidth={t.isQuarter ? 3 : 2}
+            strokeWidth={t.isQuarter ? 3.5 : 2}
             strokeLinecap="round"
             className={cn(
               "transition-colors duration-300",
               t.lit
-                ? isBreak
-                  ? "text-[var(--arena-moss)]"
-                  : "text-[var(--arena-ember)]"
+                ? isCompleted
+                  ? "text-[var(--arena-laurel)]"
+                  : isBreak
+                    ? "text-[var(--arena-moss)]"
+                    : "text-[var(--arena-ember)]"
                 : "text-muted-foreground/25"
             )}
-            opacity={t.lit ? 1 : 0.7}
+            opacity={t.lit ? 1 : t.isQuarter ? 0.9 : 0.6}
           />
         ))}
         <circle

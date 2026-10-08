@@ -20,7 +20,7 @@ export function MobileNav() {
       className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/90 backdrop-blur-md"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <div className="grid grid-cols-5 items-stretch px-2 pt-1">
+      <div className="grid grid-cols-5 items-stretch gap-1 px-2 pt-1.5">
         {navItems.map(({ href, label, icon: Icon }) => {
           const active = pathname === href;
           return (
@@ -29,17 +29,10 @@ export function MobileNav() {
               to={href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "relative flex flex-col items-center gap-1 rounded-xl px-1 py-2.5 text-[11px] font-medium transition-colors",
-                active ? "text-primary" : "text-muted-foreground"
+                "relative flex flex-col items-center gap-1 rounded-2xl px-1 py-2.5 text-[11px] font-semibold transition-all",
+                active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <span
-                aria-hidden
-                className={cn(
-                  "absolute top-0 h-0.5 w-8 rounded-full bg-primary transition-opacity",
-                  active ? "opacity-100" : "opacity-0"
-                )}
-              />
               <Icon className="size-5" strokeWidth={active ? 2.5 : 2} />
               <span className="leading-none">{label}</span>
             </Link>
