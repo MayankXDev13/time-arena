@@ -1,5 +1,10 @@
 import { authClient } from "@/auth-client";
 
+// Post-OAuth landing page. Must be ABSOLUTE: better-auth resolves a relative
+// callbackURL against the API origin (:3000), stranding users on the API.
+// An absolute SPA URL (:5173) brings them back to the app.
+const WEB_URL = import.meta.env.VITE_WEB_URL ?? "http://localhost:5173";
+
 // Better type definitions
 interface User {
   id: string;
@@ -91,7 +96,7 @@ export function useAuth(): AuthState {
     try {
       const result = await authClient.signIn.social({
         provider: "github",
-        callbackURL: "/", // Redirect to home after login
+        callbackURL: `${WEB_URL}/`, // Redirect to home after login
       });
 
       if (result?.error) {
@@ -110,7 +115,7 @@ export function useAuth(): AuthState {
     try {
       const result = await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/", // Redirect to home after login
+        callbackURL: `${WEB_URL}/`, // Redirect to home after login
       });
 
       if (result?.error) {
