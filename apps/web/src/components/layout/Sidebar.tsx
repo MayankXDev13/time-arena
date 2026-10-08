@@ -99,10 +99,10 @@ export function Sidebar() {
         </div>
         {isOpen && (
           <div className="min-w-0 flex-1">
-            <p className="font-display text-[17px] font-bold leading-none text-sidebar-foreground">
+            <p className="font-display text-[18px] font-black uppercase leading-none tracking-tight text-sidebar-foreground">
               Time Arena
             </p>
-            <p className="mt-1 truncate text-xs text-muted-foreground">
+            <p className="mt-1 truncate text-xs font-medium text-muted-foreground">
               Train your focus
             </p>
           </div>
@@ -111,7 +111,7 @@ export function Sidebar() {
 
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
         {isOpen && (
-          <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          <p className="eyebrow px-3 pb-2 text-muted-foreground">
             Arena
           </p>
         )}

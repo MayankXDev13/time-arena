@@ -9,7 +9,7 @@ export default function Home() {
 
   return (
     <div
-      className={`arena-backdrop relative min-h-screen overflow-hidden transition-all duration-300 ${
+      className={`arena-backdrop relative min-h-screen overflow-x-clip transition-all duration-300 ${
         isOpen ? "md:pl-72" : "md:pl-20"
       }`}
       data-mode={mode}
@@ -46,10 +46,10 @@ export default function Home() {
         }}
       />
 
-      <div className="relative mx-auto flex min-h-screen w-full max-w-[600px] flex-col px-4 py-10 md:px-8">
-        <div className="my-auto w-full">
+      <div className="arena-stage relative mx-auto flex min-h-screen w-full max-w-[600px] flex-col px-4 py-8 md:px-8">
+        <div className="w-full">
           <section aria-label="Focus timer" className="min-w-0">
-            <div className="animate-arena-rise-1 mx-auto max-w-[540px] rounded-[24px] border border-border/70 bg-card/90 px-4 py-7 shadow-[0_24px_70px_-30px_color-mix(in_srgb,var(--arena-ember)_45%,transparent)] backdrop-blur-sm md:px-8">
+            <div className="animate-arena-rise-1 timer-card mx-auto max-w-[540px] rounded-[24px] border border-border/70 bg-card/90 px-4 py-6 shadow-[0_24px_70px_-30px_color-mix(in_srgb,var(--arena-ember)_45%,transparent)] backdrop-blur-sm md:px-8">
               <Timer />
             </div>
           </section>

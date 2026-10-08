@@ -96,39 +96,46 @@ export default function CategoriesPage() {
           className="mb-8"
         />
 
-        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm mb-6">
-          <h2 className="text-lg font-semibold text-card-foreground mb-4">Create New Category</h2>
-          <div className="flex gap-4">
+        <div className="mb-6 rounded-[20px] border border-border/70 bg-card p-6 shadow-[0_16px_44px_-28px_color-mix(in_srgb,var(--arena-ember)_40%,transparent)]">
+          <h2 className="font-display text-lg font-extrabold uppercase tracking-tight text-card-foreground">New ground</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Name it like a craft — the color marks it on your record.</p>
+          <div className="mt-4 flex flex-col gap-3 xl:flex-row xl:items-center">
             <input
               type="text"
-              placeholder="Category name"
+              placeholder="Category name — e.g. Deep work"
               value={newCategoryName}
               onChange={(e: any) => setNewCategoryName(e.target.value)}
-              className="flex-1 px-3 py-2 border border-border rounded-md bg-background text-foreground"
+              aria-label="Category name"
+              className="h-11 min-w-0 flex-1 rounded-xl border border-border bg-background px-3.5 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-ring"
             />
-            <select
-              value={newCategoryColor}
-              onChange={(e) => setNewCategoryColor(e.target.value)}
-              className="px-3 py-2 border border-border rounded-md bg-background"
-            >
-              {COLOR_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <Button onClick={handleCreate} disabled={!newCategoryName.trim()}>
-              <Plus className="w-4 h-4 mr-2" />
-              Create
-            </Button>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-1.5 rounded-xl border border-border bg-background px-2.5 py-1.5" role="radiogroup" aria-label="Category color">
+                {COLOR_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={newCategoryColor === option.value}
+                    aria-label={option.label}
+                    title={option.label}
+                    onClick={() => setNewCategoryColor(option.value)}
+                    className={`size-7 shrink-0 rounded-full transition-transform hover:scale-110 ${option.value} ${newCategoryColor === option.value ? "ring-2 ring-[var(--ring)] ring-offset-2 ring-offset-[var(--card)]" : "ring-1 ring-black/10"}`}
+                  />
+                ))}
+              </div>
+              <Button onClick={handleCreate} disabled={!newCategoryName.trim()} className="h-11 shrink-0">
+                <Plus className="w-4 h-4 mr-1.5" />
+                Create
+              </Button>
+            </div>
           </div>
         </div>
 
-        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
-          <h2 className="text-lg font-semibold text-card-foreground mb-4">Your Categories</h2>
-          <div className="space-y-3">
+        <div className="rounded-[20px] border border-border/70 bg-card p-6 shadow-[0_16px_44px_-28px_color-mix(in_srgb,var(--arena-ember)_40%,transparent)]">
+          <h2 className="font-display text-lg font-extrabold uppercase tracking-tight text-card-foreground">Your grounds</h2>
+          <div className="mt-4 space-y-2.5">
             {categories?.map((category: any) => (
-              <div key={category.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+              <div key={category.id} className="card-lift flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-muted/40 p-3">
                 {editingId === category.id ? (
                   <div className="flex items-center gap-3 flex-1">
                     <input
@@ -157,15 +164,15 @@ export default function CategoriesPage() {
                   </div>
                 ) : (
                   <>
-                    <div className="flex items-center gap-3">
-                      <div className={`w-4 h-4 rounded-full ${category.color}`} />
-                      <span className="text-card-foreground">{category.name}</span>
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className={`size-4 shrink-0 rounded-full ring-1 ring-black/10 ${category.color}`} />
+                      <span className="truncate text-[15px] font-semibold text-card-foreground">{category.name}</span>
                     </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => handleEdit(category)}>
+                    <div className="flex shrink-0 gap-1.5">
+                      <Button size="sm" variant="outline" onClick={() => handleEdit(category)} aria-label={`Edit ${category.name}`}>
                         <Edit2 className="w-4 h-4" />
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => handleDelete(category.id)}>
+                      <Button size="sm" variant="outline" onClick={() => handleDelete(category.id)} aria-label={`Delete ${category.name}`}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>

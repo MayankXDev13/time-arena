@@ -221,7 +221,7 @@ export default function SessionsPage() {
                 sessions.page.map((session: any) => (
                   <div 
                     key={session.id} 
-                    className="group grid grid-cols-[1fr_auto] sm:grid-cols-[110px_100px_100px_1fr_auto] items-center gap-3 sm:gap-4 p-3 rounded-xl border bg-card hover:bg-accent/40 transition-colors"
+                    className="card-lift group grid grid-cols-[1fr_auto] sm:grid-cols-[110px_100px_100px_1fr_auto] items-center gap-3 sm:gap-4 rounded-2xl border border-border/70 bg-card p-3.5"
                   >
                     {/* Date & Time */}
                     <div className="flex flex-col col-span-1 sm:col-auto">
@@ -394,13 +394,13 @@ export default function SessionsPage() {
 function CategoryBadge({ categoryId }: { categoryId?: string | null }) {
   const { data: categories } = useCategories();
 
-  if (!categories) return <span className="text-sm text-muted-foreground">-</span>;
+  if (!categories) return <span className="text-sm text-muted-foreground">—</span>;
 
   if (!categoryId) {
     return (
-      <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-muted/50 w-fit">
-        <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
-        <span className="text-sm text-muted-foreground">Uncategorized</span>
+      <div className="flex items-center gap-1.5 rounded-full bg-muted/60 px-2.5 py-1 ring-1 ring-border/60 w-fit">
+        <div className="size-2 rounded-full bg-muted-foreground/30" />
+        <span className="text-[13px] font-medium text-muted-foreground">Uncategorized</span>
       </div>
     );
   }
@@ -408,20 +408,19 @@ function CategoryBadge({ categoryId }: { categoryId?: string | null }) {
   const category = categories.find((cat: any) => cat.id === categoryId);
   if (!category) {
     return (
-      <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-muted/50 w-fit">
-        <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
-        <span className="text-sm text-muted-foreground">Unknown</span>
+      <div className="flex items-center gap-1.5 rounded-full bg-muted/60 px-2.5 py-1 ring-1 ring-border/60 w-fit">
+        <div className="size-2 rounded-full bg-muted-foreground/30" />
+        <span className="text-[13px] font-medium text-muted-foreground">Unknown</span>
       </div>
     );
   }
 
   return (
-    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-muted w-fit max-w-full">
+    <div className="flex items-center gap-1.5 rounded-full bg-muted/60 px-2.5 py-1 ring-1 ring-border/60 w-fit max-w-full">
       <div
-        className="w-2 h-2 rounded-full shrink-0"
-        style={{ backgroundColor: category.color.replace("bg-", "").replace("-500", "") }}
+        className={`size-2 shrink-0 rounded-full ring-1 ring-black/10 ${category.color}`}
       />
-      <span className="text-sm font-medium truncate">{category.name}</span>
+      <span className="truncate text-[13px] font-semibold">{category.name}</span>
     </div>
   );
 }

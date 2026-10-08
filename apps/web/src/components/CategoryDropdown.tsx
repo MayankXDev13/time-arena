@@ -79,30 +79,28 @@ export function CategoryDropdown({
       </Button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-lg z-10 max-h-48 overflow-y-auto">
-          
-
+        <div className="absolute top-full left-0 right-0 z-10 mt-1.5 max-h-56 overflow-y-auto rounded-2xl border border-border bg-card p-1.5 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.35)]">
           <button
             type="button"
             onClick={() => handleSelect(undefined)}
-            className="w-full px-3 py-2 text-left hover:bg-accent text-muted-foreground"
+            className="w-full rounded-xl px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             Select category
           </button>
 
-    
           {categories?.map((category: any) => (
             <button
               key={category.id}
               type="button"
               onClick={() => handleSelect(category.id)}
-              className="w-full px-3 py-2 text-left hover:bg-accent flex items-center space-x-2"
+              aria-pressed={selectedCategoryId === category.id}
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm transition-colors hover:bg-accent"
             >
-              <div className={`w-3 h-3 rounded-full ${category.color}`} />
-              <span>{category.name}</span>
+              <div className={`size-3 shrink-0 rounded-full ring-1 ring-black/10 ${category.color}`} />
+              <span className="min-w-0 flex-1 truncate font-medium">{category.name}</span>
 
               {selectedCategoryId === category.id && (
-                <Check className="w-4 h-4 ml-auto" />
+                <Check className="size-4 shrink-0 text-primary" />
               )}
             </button>
           ))}

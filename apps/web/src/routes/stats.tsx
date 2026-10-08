@@ -155,34 +155,38 @@ export default function StatsPage() {
         )}
 
         {!statsLoading && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
-            <h3 className="text-sm font-medium text-muted-foreground mb-1">Today&apos;s focus</h3>
-            <p className="font-numeral text-2xl font-semibold tabular-nums text-foreground">{stats?.todayMinutes || 0}<span className="text-sm font-medium text-muted-foreground">m</span></p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-8">
+          <div className="card-lift rounded-[20px] border border-border/70 bg-card p-5 md:p-6">
+            <h3 className="eyebrow text-muted-foreground">Today</h3>
+            <p className="font-numeral mt-2 text-[28px] font-extrabold tabular-nums leading-none text-foreground">{stats?.todayMinutes || 0}<span className="ml-0.5 text-sm font-bold text-muted-foreground">m</span></p>
+            <p className="mt-1 text-xs text-muted-foreground">Focus banked</p>
           </div>
-          <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
-            <h3 className="text-sm font-medium text-muted-foreground mb-1">Win streak</h3>
-            <p className="font-numeral text-2xl font-semibold tabular-nums text-foreground">{stats?.currentStreak || 0} <span className="text-sm font-medium text-muted-foreground">days</span></p>
+          <div className="card-lift rounded-[20px] border border-border/70 bg-card p-5 md:p-6">
+            <h3 className="eyebrow text-muted-foreground">Streak</h3>
+            <p className="font-numeral mt-2 text-[28px] font-extrabold tabular-nums leading-none text-foreground">{stats?.currentStreak || 0} <span className="text-sm font-bold text-muted-foreground">days</span></p>
+            <p className="mt-1 text-xs text-muted-foreground">Win streak</p>
           </div>
-          <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
-            <h3 className="text-sm font-medium text-muted-foreground mb-1">This week</h3>
-            <p className="font-numeral text-2xl font-semibold tabular-nums text-foreground">{stats?.weeklyMinutes || 0}<span className="text-sm font-medium text-muted-foreground">m</span></p>
+          <div className="card-lift rounded-[20px] border border-border/70 bg-card p-5 md:p-6">
+            <h3 className="eyebrow text-muted-foreground">Week</h3>
+            <p className="font-numeral mt-2 text-[28px] font-extrabold tabular-nums leading-none text-foreground">{stats?.weeklyMinutes || 0}<span className="ml-0.5 text-sm font-bold text-muted-foreground">m</span></p>
+            <p className="mt-1 text-xs text-muted-foreground">Last 7 days</p>
           </div>
-          <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
-            <h3 className="text-sm font-medium text-muted-foreground mb-1">Total focus</h3>
-            <p className="font-numeral text-2xl font-semibold tabular-nums text-foreground">{stats?.totalMinutes || 0}<span className="text-sm font-medium text-muted-foreground">m</span></p>
+          <div className="card-lift rounded-[20px] border border-border/70 bg-card p-5 md:p-6">
+            <h3 className="eyebrow text-muted-foreground">Total</h3>
+            <p className="font-numeral mt-2 text-[28px] font-extrabold tabular-nums leading-none text-foreground">{stats?.totalMinutes || 0}<span className="ml-0.5 text-sm font-bold text-muted-foreground">m</span></p>
+            <p className="mt-1 text-xs text-muted-foreground">All-time focus</p>
           </div>
         </div>
         )}
 
         <div className="grid grid-cols-12 gap-6 mb-8">
-          <div className="col-span-12 bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl shadow-sm p-6">
+          <div className="col-span-12 rounded-[20px] border border-border/70 bg-card p-6 shadow-[0_16px_44px_-28px_color-mix(in_srgb,var(--arena-ember)_40%,transparent)]">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-card-foreground">
-                Last 7 Days
+              <h3 className="font-display text-lg font-extrabold uppercase tracking-tight text-card-foreground">
+                Last 7 days
               </h3>
 
-              <p className="text-xs text-muted-foreground">
+              <p className="font-numeral text-xs tabular-nums text-muted-foreground">
                 {activeDays.length} active days
               </p>
             </div>

@@ -51,11 +51,11 @@
 :root {
   --radius: 0.625rem;
 
-  /* Vite build has no next/font variables; fall back to system stacks. */
-  --font-geist-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-geist-mono: ui-monospace, "SF Mono", Menlo, monospace;
-  --font-display: system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-numeral: ui-monospace, "SF Mono", Menlo, monospace;
+  /* Fight-poster grotesk for display, Inter for body, JetBrains Mono for the bell numerals. */
+  --font-geist-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-geist-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-display: "Archivo", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-numeral: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
   /* Time Arena — slate mist / torch ember / laurel / moss.
      Cool mist (not warm cream) keeps the arena legible in daylight;
@@ -190,13 +190,96 @@
 
 .font-display {
   font-family: var(--font-display), var(--font-geist-sans), system-ui, sans-serif;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
+  font-stretch: condensed;
 }
 
 .font-numeral {
   font-family: var(--font-numeral), var(--font-geist-mono), ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.05em;
+}
+
+/* Poster eyebrow: condensed, tracked, with a leading ember tick. */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.eyebrow::before {
+  content: "";
+  width: 1.25rem;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--arena-ember);
+}
+
+/* Quiet lift for cards and bout rows: one shadow, one border, no scatter. */
+.card-lift {
+  transition: transform 0.2s ease, box-shadow 0.25s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+.card-lift:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 44px -22px color-mix(in srgb, var(--arena-ember) 45%, transparent);
+  border-color: color-mix(in srgb, var(--arena-ember) 28%, var(--border));
+}
+
+kbd.kbd {
+  font-family: var(--font-numeral), ui-monospace, monospace;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  background: var(--card);
+  border-radius: 6px;
+  padding: 1px 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Refined scrollbars: thin, quiet, arena-tinted on hover. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--muted-foreground) 45%, transparent) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--muted-foreground) 35%, transparent);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Arena stage: `safe center` vertically centers the card whenever it fits,
+   and top-anchors (scrollable, never clipped) when the card is taller. */
+.arena-stage {
+  justify-content: safe center;
+}
+/* Short laptop screens: tighten the stage padding so the card breathes. */
+@media (max-height: 820px) {
+  .arena-stage {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+  /* Compact hero: smaller gaps, slimmer card, no helper hint line. */
+  .timer-stack {
+    gap: 0.75rem;
+  }
+  .timer-card {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    border-radius: 20px;
+  }
+  .arena-hide-short {
+    display: none;
+  }
 }
 
 /* Arena backdrop: one radial torch glow + faint tier lines. Single signature, kept quiet. */
