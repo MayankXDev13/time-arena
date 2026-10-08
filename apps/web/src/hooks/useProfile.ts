@@ -1,8 +1,13 @@
-
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { api, qk } from "@/lib/api";
-import { useAuth } from "@/hooks/useAuth";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useCallback } from "react";
+import { api } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
+import { profileKeys, settingsKeys } from "@/lib/query-keys";
+import { useUpdateSettings, type SettingsPatch } from "./useSettings.js";
 
 export function useProfile() {
   const { user } = useAuth();
@@ -10,43 +15,45 @@ export function useProfile() {
   const enabled = !!user?.id;
 
   const profileQuery = useQuery({
-    queryKey: qk.profile,
+    queryKey: profileKeys.detail(),
     queryFn: api.getProfile,
     enabled,
+    staleTime: 60_000,
   });
   const settingsQuery = useQuery({
-    queryKey: qk.settings,
+    queryKey: settingsKeys.detail(),
     queryFn: api.getSettings,
     enabled,
+    staleTime: 60_000,
   });
 
-  const invalidate = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: qk.profile });
-    queryClient.invalidateQueries({ queryKey: qk.settings });
-  }, [queryClient]);
-
-  const settingsMutation = useMutation({
-    mutationFn: api.updateSettings,
-    onSuccess: invalidate,
-  });
   const bioMutation = useMutation({
     mutationFn: (bio: string) => api.updateProfile({ bio }),
-    onSuccess: invalidate,
+    onMutate: async (bio) => {
+      await queryClient.cancelQueries({ queryKey: profileKeys.detail() });
+      const previous = queryClient.getQueryData(profileKeys.detail());
+      queryClient.setQueryData(profileKeys.detail(), (current: unknown) => {
+        if (!current || typeof current !== "object") return current;
+        const profile = (current as { profile?: unknown }).profile;
+        if (!profile || typeof profile !== "object") return current;
+        return { ...(current as object), profile: { ...profile, bio } };
+      });
+      return { previous };
+    },
+    onError: (_err, _bio, context) => {
+      if (context) queryClient.setQueryData(profileKeys.detail(), context.previous);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: profileKeys.detail() }),
   });
 
+  const settingsMutation = useUpdateSettings();
+
   const updateSettingsAsync = useCallback(
-    async (updates: {
-      streakThresholdMinutes?: number;
-      autoStartBreaks?: boolean;
-      soundEnabled?: boolean;
-      defaultTimerMinutes?: number;
-      breakDurationMinutes?: number;
-      theme?: string;
-    }) => {
+    async (updates: SettingsPatch) => {
       if (!user?.id) return;
       await settingsMutation.mutateAsync(updates);
     },
-    [user, settingsMutation]
+    [user, settingsMutation],
   );
 
   const updateBio = useCallback(
@@ -54,7 +61,7 @@ export function useProfile() {
       if (!user?.id) return;
       await bioMutation.mutateAsync(bio);
     },
-    [user, bioMutation]
+    [user, bioMutation],
   );
 
   return {
@@ -64,5 +71,7 @@ export function useProfile() {
     updateSettings: updateSettingsAsync,
     updateBio,
     isLoading: profileQuery.isLoading || settingsQuery.isLoading,
+    isError: profileQuery.isError || settingsQuery.isError,
+    refetch: profileQuery.refetch,
   };
 }

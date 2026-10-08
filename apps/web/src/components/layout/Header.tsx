@@ -1,17 +1,12 @@
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { api, qk } from "@/lib/api";
+import { useStats } from "@/hooks/useStats";
 import { useAuth } from "@/hooks/useAuth";
 import { User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function Header() {
   const { user } = useAuth();
-  const { data: stats } = useQuery({
-    queryKey: qk.stats,
-    queryFn: api.getStats,
-    enabled: !!user?.id,
-  });
+  const { data: stats } = useStats();
 
   return (
     <header className="h-16 bg-background border-b border-border flex items-center justify-between px-6 fixed top-0 left-0 md:left-64 right-0 z-30">

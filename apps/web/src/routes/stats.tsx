@@ -1,8 +1,9 @@
 
 import { useState, useMemo } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { api, qk } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
+import { useDeleteSession, useUpdateSession } from "@/hooks/useSessionHistory";
+import { useRecentSessions, useStats } from "@/hooks/useStats";
+import { useCategories } from "@/hooks/useCategories";
 import { useSidebarStore } from "@/stores/useSidebarStore";
 import { Button } from "@/components/ui/button";
 import { CategoryDropdown } from "@/components/CategoryDropdown";
@@ -20,36 +21,16 @@ export default function StatsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editCategoryId, setEditCategoryId] = useState<string | undefined>();
 
-  const queryClient = useQueryClient();
-  const { data: sessions } = useQuery({
-    queryKey: qk.recent(50, selectedCategoryId),
-    queryFn: () => api.getRecent(50, selectedCategoryId),
-    enabled: !!user?.id,
-  });
-  const { data: categories } = useQuery({
-    queryKey: qk.categories,
-    queryFn: api.listCategories,
-    enabled: !!user?.id,
-  });
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ["recent"] });
-    queryClient.invalidateQueries({ queryKey: ["history"] });
-    queryClient.invalidateQueries({ queryKey: ["stats"] });
-  };
-  const updateSession = useMutation({
-    mutationFn: (input: { id: string; categoryId?: string }) =>
-      api.updateSession(input.id, { categoryId: input.categoryId ?? null }),
-    onSuccess: invalidate,
-  });
-  const deleteSession = useMutation({
-    mutationFn: (id: string) => api.deleteSession(id),
-    onSuccess: invalidate,
-  });
-  const { data: stats } = useQuery({
-    queryKey: qk.stats,
-    queryFn: api.getStats,
-    enabled: !!user?.id,
-  });
+  const sessionsQuery = useRecentSessions(50, selectedCategoryId);
+  const sessions = sessionsQuery.data;
+  const categoriesQuery = useCategories();
+  const categories = categoriesQuery.data;
+  const updateSession = useUpdateSession();
+  const deleteSession = useDeleteSession();
+  const statsQuery = useStats();
+  const stats = statsQuery.data;
+  const statsLoading = statsQuery.isLoading && !stats;
+  const statsRefreshing = statsQuery.isFetching && !statsQuery.isLoading;
 
   const handleEdit = (session: any) => {
     setEditingId(session.id);
@@ -147,7 +128,33 @@ export default function StatsPage() {
           description="Your last 7 days, best grounds, and every saved bout. Filter to see what earned it."
           className="mb-8"
         />
+        {statsLoading && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8" aria-label="Loading statistics">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="bg-card p-6 rounded-2xl border border-border shadow-sm animate-pulse">
+                <div className="h-4 w-20 bg-muted rounded mb-2" />
+                <div className="h-7 w-16 bg-muted rounded" />
+              </div>
+            ))}
+          </div>
+        )}
+        {statsQuery.isError && (
+          <div className="mb-8 rounded-2xl border border-destructive/30 bg-destructive/5 p-4 flex items-center justify-between gap-4">
+            <p className="text-sm text-muted-foreground">
+              Couldn&apos;t refresh your record — showing the last good data.
+            </p>
+            <Button variant="outline" size="sm" onClick={() => statsQuery.refetch()}>
+              Retry
+            </Button>
+          </div>
+        )}
+        {!statsLoading && statsRefreshing && (
+          <p className="mb-4 text-xs text-muted-foreground" role="status">
+            Refreshing…
+          </p>
+        )}
 
+        {!statsLoading && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
             <h3 className="text-sm font-medium text-muted-foreground mb-1">Today&apos;s focus</h3>
@@ -166,6 +173,7 @@ export default function StatsPage() {
             <p className="font-numeral text-2xl font-semibold tabular-nums text-foreground">{stats?.totalMinutes || 0}<span className="text-sm font-medium text-muted-foreground">m</span></p>
           </div>
         </div>
+        )}
 
         <div className="grid grid-cols-12 gap-6 mb-8">
           <div className="col-span-12 bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl shadow-sm p-6">

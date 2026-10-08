@@ -1,19 +1,12 @@
 
 import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { api, qk } from "@/lib/api";
-import { useAuth } from "@/hooks/useAuth";
+import { useSettingsQuery } from "@/hooks/useSettings";
 import { useThemeStore } from "@/stores/useThemeStore";
 
 export function useThemeSync() {
-  const { user } = useAuth();
   const { setTheme } = useThemeStore();
 
-  const { data: settings } = useQuery({
-    queryKey: qk.settings,
-    queryFn: api.getSettings,
-    enabled: !!user?.id,
-  });
+  const { data: settings } = useSettingsQuery();
 
   useEffect(() => {
     if (settings?.theme) {

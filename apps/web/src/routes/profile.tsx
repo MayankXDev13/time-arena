@@ -1,8 +1,7 @@
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { api, qk } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
+import { useContributions, useStats } from "@/hooks/useStats";
 import { useSidebarStore } from "@/stores/useSidebarStore";
 import { useThemeSync } from "@/hooks/useThemeSync";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -22,19 +21,38 @@ export default function ProfilePage() {
   
   useThemeSync();
 
-  const { data: stats } = useQuery({
-    queryKey: qk.stats,
-    queryFn: api.getStats,
-    enabled: !!user?.id,
-  });
-  const { data: contribution } = useQuery({
-    queryKey: qk.contributions(selectedYear),
-    queryFn: () => api.getContributions(selectedYear),
-    enabled: !!user?.id,
-  });
+  const statsQuery = useStats();
+  const contribQuery = useContributions(selectedYear);
+  const stats = statsQuery.data;
+  const contribution = contribQuery.data;
 
   if (!isAuthenticated || !user) {
     return null;
+  }
+
+  if (statsQuery.isError || contribQuery.isError) {
+    return (
+      <div className={`min-h-screen bg-background transition-all duration-300 ${
+        isOpen ? "md:pl-64" : "md:pl-0"
+      }`}>
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+          <h1 className="text-2xl font-bold text-foreground mb-8">Profile</h1>
+          <p className="text-sm text-muted-foreground">
+            Couldn&apos;t load your record. Check your connection and try again.
+          </p>
+          <button
+            type="button"
+            className="mt-4 rounded-lg border border-border px-4 py-2 text-sm font-medium"
+            onClick={() => {
+              void statsQuery.refetch();
+              void contribQuery.refetch();
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (!stats || !contribution) {

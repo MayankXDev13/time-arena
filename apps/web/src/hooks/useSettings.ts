@@ -1,59 +1,45 @@
-import { useCallback } from 'react';
-import { useSettingsStore } from '@/stores/useSettingsStore';
-import type { UserSettings } from '@/types';
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { api, type SettingsItem } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
+import { profileKeys, settingsKeys } from "@/lib/query-keys";
 
-export function useSettings() {
-  const { settings, setSettings, updateSettings } = useSettingsStore();
+export type SettingsPatch = Partial<Omit<SettingsItem, "userId">>;
 
-  const loadSettings = useCallback(
-    async (userId: string) => {
-      const stored = localStorage.getItem(`time-arena-settings-${userId}`);
-      if (stored) {
-        const data = JSON.parse(stored);
-        setSettings({
-          userId: data.user_id,
-          streakThresholdMinutes: data.streak_threshold_minutes,
-          createdAt: new Date(data.created_at),
-          updatedAt: new Date(data.updated_at),
-        } as UserSettings);
-      } else {
-        const defaultSettings: UserSettings = {
-          userId,
-          streakThresholdMinutes: 15,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-        setSettings(defaultSettings);
-        localStorage.setItem(`time-arena-settings-${userId}`, JSON.stringify({
-          user_id: userId,
-          streak_threshold_minutes: 15,
-          created_at: defaultSettings.createdAt.toISOString(),
-          updated_at: defaultSettings.updatedAt.toISOString(),
-        }));
+export function useSettingsQuery() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: settingsKeys.detail(),
+    queryFn: api.getSettings,
+    enabled: !!user?.id,
+    staleTime: 60_000,
+  });
+}
+
+export function useUpdateSettings() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (patch: SettingsPatch) => api.updateSettings(patch),
+    onMutate: async (patch) => {
+      await queryClient.cancelQueries({ queryKey: settingsKeys.detail() });
+      const previous = queryClient.getQueryData<SettingsItem>(settingsKeys.detail());
+      queryClient.setQueryData<SettingsItem>(settingsKeys.detail(), (current) =>
+        current ? { ...current, ...patch } : current,
+      );
+      return { previous };
+    },
+    onError: (_err, _patch, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(settingsKeys.detail(), context.previous);
       }
     },
-    [setSettings]
-  );
-
-  const updateStreakThreshold = useCallback(
-    async (threshold: number) => {
-      updateSettings({ streakThresholdMinutes: threshold });
-      if (settings?.userId) {
-        const stored = localStorage.getItem(`time-arena-settings-${settings.userId}`);
-        if (stored) {
-          const data = JSON.parse(stored);
-          data.streak_threshold_minutes = threshold;
-          data.updated_at = new Date().toISOString();
-          localStorage.setItem(`time-arena-settings-${settings.userId}`, JSON.stringify(data));
-        }
-      }
+    onSettled: () => {
+      // The profile payload embeds a settings snapshot: refresh both.
+      queryClient.invalidateQueries({ queryKey: settingsKeys.detail() });
+      queryClient.invalidateQueries({ queryKey: profileKeys.detail() });
     },
-    [settings?.userId, updateSettings]
-  );
-
-  return {
-    settings,
-    loadSettings,
-    updateStreakThreshold,
-  };
+  });
 }
