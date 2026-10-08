@@ -14,3 +14,4 @@ export { authSchema };
 export * from "./auth-schema.js";
 export * from "./categories.js";
 export * from "./sessions.js";
+export * from "./users.js";

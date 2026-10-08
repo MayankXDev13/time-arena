@@ -3,6 +3,7 @@ import express from "express";
 import { authRoutes } from "./routes/auth.routes.js";
 import { categoryRoutes } from "./routes/category.routes.js";
 import { sessionRoutes } from "./routes/session.routes.js";
+import { usersRoutes } from "./routes/users.routes.js";
 
 export function createApp(): express.Express {
   const app = express();
@@ -25,6 +26,7 @@ export function createApp(): express.Express {
   app.use("/api/auth", authRoutes);
   app.use("/api", sessionRoutes);
   app.use("/api", categoryRoutes);
+  app.use("/api", usersRoutes);
 
   // Central error handler: never leak stack traces over HTTP.
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
