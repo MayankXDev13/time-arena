@@ -84,6 +84,12 @@ jobs:
         if: ${{ env.DATABASE_URL != '' && env.BETTER_AUTH_SECRET != '' }}
         run: bun install --frozen-lockfile
 
+      - name: Build dependencies
+        # @repo/api resolves @repo/db via its built dist; this job runs the
+        # package script directly (not through turbo), so build first.
+        if: ${{ env.DATABASE_URL != '' && env.BETTER_AUTH_SECRET != '' }}
+        run: bunx turbo build --filter=@repo/api...
+
       - name: Apply migrations to test database
         if: ${{ env.DATABASE_URL != '' && env.BETTER_AUTH_SECRET != '' }}
         run: bun --filter @repo/db db:migrate

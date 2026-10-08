@@ -7,11 +7,13 @@
       "outputs": ["dist/**", ".next/**"]
     },
     "check-types": {
-      "dependsOn": ["^check-types"],
+      "dependsOn": ["^check-types", "^build"],
       "inputs": ["src/**", "app/**", "components/**", "db/**", "drizzle/**", "hooks/**", "lib/**", "stores/**", "types/**", "utils/**", "package.json", "tsconfig*.json", "vite.config.*", "vitest.config.*", "next.config.*", "postcss.config.*", "index.html"]
     },
     "lint": {},
-    "test": {},
+    "test": {
+      "dependsOn": ["^build"]
+    },
     "dev": {
       "persistent": true,
       "cache": false
