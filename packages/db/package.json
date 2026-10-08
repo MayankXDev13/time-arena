@@ -10,14 +10,15 @@
     "check-types": "tsc --noEmit",
     "lint": "echo \"@repo/db: no lint rules yet\"",
     "test": "echo \"@repo/db: no tests yet\"",
-    "db:generate": "echo \"@repo/db: schema move lands in a later slice\"",
-    "db:migrate": "echo \"@repo/db: schema move lands in a later slice\""
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.0",
     "drizzle-orm": "^0.45.3"
   },
   "devDependencies": {
+    "drizzle-kit": "^0.31.11",
     "typescript": "^5"
   }
 }
