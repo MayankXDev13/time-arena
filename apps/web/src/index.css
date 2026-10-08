@@ -1,0 +1,266 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-display);
+  --font-numeral: var(--font-numeral);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+}
+
+:root {
+  --radius: 0.625rem;
+
+  /* Vite build has no next/font variables; fall back to system stacks. */
+  --font-geist-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-geist-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --font-display: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-numeral: ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Time Arena — slate mist / torch ember / laurel / moss.
+     Cool mist (not warm cream) keeps the arena legible in daylight;
+     ember carries focus, moss carries rest, laurel carries streaks. */
+  --background: #f4f5f7;
+  --foreground: #16181d;
+
+  --card: #ffffff;
+  --card-foreground: #16181d;
+
+  --popover: #ffffff;
+  --popover-foreground: #16181d;
+
+  --primary: #c2410c;
+  --primary-foreground: #fff7ed;
+
+  --secondary: #e7e9ee;
+  --secondary-foreground: #16181d;
+
+  --muted: #e7e9ee;
+  --muted-foreground: #5f6675;
+
+  --accent: #ffedd5;
+  --accent-foreground: #7c2d12;
+
+  --destructive: oklch(0.577 0.245 27.325);
+
+  --border: #e0e3e9;
+  --input: #e0e3e9;
+  --ring: #c2410c;
+
+  --arena-ember: #c2410c;
+  --arena-ember-soft: #ffedd5;
+  --arena-moss: #2f7d5a;
+  --arena-moss-soft: #dcf5e7;
+  --arena-laurel: #a67c2e;
+  --arena-ink: #12141a;
+
+  --chart-1: #fb923c;
+  --chart-2: #ea580c;
+  --chart-3: #c2410c;
+  --chart-4: #7c2d12;
+  --chart-5: #2f7d5a;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #16181d;
+
+  --sidebar-primary: #c2410c;
+  --sidebar-primary-foreground: #fff7ed;
+
+  --sidebar-accent: #f1f2f5;
+  --sidebar-accent-foreground: #16181d;
+
+  --sidebar-border: #e0e3e9;
+  --sidebar-ring: #c2410c;
+}
+
+
+.dark {
+  --background: #12141a;
+  --foreground: #f4f5f7;
+
+  --card: #1a1e26;
+  --card-foreground: #f4f5f7;
+
+  --popover: #1a1e26;
+  --popover-foreground: #f4f5f7;
+
+  --primary: #f0642b;
+  --primary-foreground: #1a100a;
+
+  --secondary: #262c38;
+  --secondary-foreground: #f4f5f7;
+
+  --muted: #262c38;
+  --muted-foreground: #a8b0c0;
+
+  --accent: #2b2118;
+  --accent-foreground: #fdba74;
+
+  --destructive: oklch(0.704 0.191 22.216);
+
+  --border: #2a3140;
+  --input: #2a3140;
+  --ring: #f0642b;
+
+  --arena-ember: #f0642b;
+  --arena-ember-soft: #2b2118;
+  --arena-moss: #4cc38a;
+  --arena-moss-soft: #143327;
+  --arena-laurel: #d9a441;
+  --arena-ink: #12141a;
+
+  --chart-1: #fdba74;
+  --chart-2: #fb923c;
+  --chart-3: #f0642b;
+  --chart-4: #c2410c;
+  --chart-5: #4cc38a;
+
+  --sidebar: #151923;
+  --sidebar-foreground: #f4f5f7;
+
+  --sidebar-primary: #f0642b;
+  --sidebar-primary-foreground: #1a100a;
+
+  --sidebar-accent: #232a38;
+  --sidebar-accent-foreground: #f4f5f7;
+
+  --sidebar-border: #2a3140;
+  --sidebar-ring: #f0642b;
+}
+
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "ss01", "cv05";
+  }
+  ::selection {
+    background: var(--arena-ember);
+    color: #fff7ed;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+}
+
+.font-display {
+  font-family: var(--font-display), var(--font-geist-sans), system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.font-numeral {
+  font-family: var(--font-numeral), var(--font-geist-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+}
+
+/* Arena backdrop: one radial torch glow + faint tier lines. Single signature, kept quiet. */
+.arena-backdrop {
+  background:
+    radial-gradient(560px 380px at 50% 30%, color-mix(in srgb, var(--arena-ember) 14%, transparent), transparent 70%),
+    radial-gradient(900px 500px at 50% 110%, color-mix(in srgb, var(--arena-moss) 8%, transparent), transparent 70%);
+}
+.arena-backdrop[data-mode="break"] {
+  background:
+    radial-gradient(560px 380px at 50% 30%, color-mix(in srgb, var(--arena-moss) 16%, transparent), transparent 70%),
+    radial-gradient(900px 500px at 50% 110%, color-mix(in srgb, var(--arena-ember) 6%, transparent), transparent 70%);
+}
+.dark .arena-backdrop {
+  background:
+    radial-gradient(640px 420px at 50% 28%, color-mix(in srgb, var(--arena-ember) 22%, transparent), transparent 72%),
+    radial-gradient(1000px 560px at 50% 115%, color-mix(in srgb, var(--arena-moss) 10%, transparent), transparent 70%);
+}
+
+@keyframes arena-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.015); }
+}
+@keyframes arena-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-arena-breathe {
+  animation: arena-breathe 3.2s ease-in-out infinite;
+}
+.animate-arena-rise {
+  animation: arena-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.animate-arena-rise-1 { animation: arena-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both; }
+.animate-arena-rise-2 { animation: arena-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both; }
+.animate-arena-rise-3 { animation: arena-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.19s both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-arena-breathe,
+  .animate-arena-rise,
+  .animate-arena-rise-1,
+  .animate-arena-rise-2,
+  .animate-arena-rise-3 {
+    animation: none;
+  }
+}
+
+/* Hide number input spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+@keyframes chartBarEnter {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
