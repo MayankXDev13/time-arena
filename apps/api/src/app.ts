@@ -1,5 +1,8 @@
 import cors from "cors";
 import express from "express";
+import { randomUUID } from "node:crypto";
+import { pinoHttp } from "pino-http";
+import { logger } from "./logger.js";
 import { authRoutes } from "./routes/auth.routes.js";
 import { categoryRoutes } from "./routes/category.routes.js";
 import { sessionRoutes } from "./routes/session.routes.js";
@@ -15,6 +18,12 @@ export function createApp(): express.Express {
     }),
   );
   app.use(express.json());
+  app.use(
+    pinoHttp({
+      logger,
+      genReqId: () => randomUUID(),
+    }),
+  );
 
   app.get("/health", (_req, res) => {
     res.json({ ok: true, service: "api" });
@@ -34,11 +43,12 @@ export function createApp(): express.Express {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.use(
     (
-      _err: unknown,
-      _req: express.Request,
+      err: unknown,
+      req: express.Request,
       res: express.Response,
       _next: express.NextFunction,
     ) => {
+      req.log.error({ err }, "unhandled request error");
       res.status(500).json({ error: "internal_error" });
     },
   );
