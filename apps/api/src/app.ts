@@ -1,6 +1,7 @@
 import cors from "cors";
 import express from "express";
 import { authRoutes } from "./routes/auth.routes.js";
+import { categoryRoutes } from "./routes/category.routes.js";
 import { sessionRoutes } from "./routes/session.routes.js";
 
 export function createApp(): express.Express {
@@ -23,6 +24,7 @@ export function createApp(): express.Express {
 
   app.use("/api/auth", authRoutes);
   app.use("/api", sessionRoutes);
+  app.use("/api", categoryRoutes);
 
   // Central error handler: never leak stack traces over HTTP.
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
