@@ -16,17 +16,38 @@ export function Preferences() {
 
   // Drafts keep keystrokes local; a single PATCH commits 600ms after the
   // last change (or immediately on blur/unmount) instead of per keystroke.
+  // The Saving… flag tracks the actual in-flight request and clears on
+  // settle — never lingering on merely-dirty state.
   const [focusDraft, setFocusDraft] = useState<string | null>(null);
   const [breakDraft, setBreakDraft] = useState<string | null>(null);
+  const [savingFocus, setSavingFocus] = useState(false);
+  const [savingBreak, setSavingBreak] = useState(false);
   const updateSettingsRef = useRef(updateSettings);
   updateSettingsRef.current = updateSettings;
-  const commit = useDebouncedCallback(
-    (patch: { defaultTimerMinutes?: number; breakDurationMinutes?: number }) =>
-      void updateSettingsRef.current(patch),
-    600,
-  );
+  const commitFocus = useDebouncedCallback(async (value: number) => {
+    setSavingFocus(true);
+    try {
+      await updateSettingsRef.current({ defaultTimerMinutes: value });
+    } finally {
+      setSavingFocus(false);
+    }
+  }, 600);
+  const commitBreak = useDebouncedCallback(async (value: number) => {
+    setSavingBreak(true);
+    try {
+      await updateSettingsRef.current({ breakDurationMinutes: value });
+    } finally {
+      setSavingBreak(false);
+    }
+  }, 600);
 
-  useEffect(() => () => commit.flush(), [commit.flush]);
+  useEffect(
+    () => () => {
+      commitFocus.flush();
+      commitBreak.flush();
+    },
+    [commitFocus.flush, commitBreak.flush],
+  );
 
   // A draft reconciles once the server echoes the same value back.
   useEffect(() => {
@@ -43,9 +64,6 @@ export function Preferences() {
       setBreakDraft(null);
     }
   }, [settings, focusDraft, breakDraft]);
-
-  const focusDirty = focusDraft !== null;
-  const breakDirty = breakDraft !== null;
 
   useEffect(() => {
     if (settings?.breakDurationMinutes) {
@@ -97,21 +115,19 @@ export function Preferences() {
                 setFocusDraft(raw);
                 const parsed = parseInt(raw);
                 if (!Number.isNaN(parsed)) {
-                  commit.call({
-                    defaultTimerMinutes: Math.min(120, Math.max(5, parsed)),
-                  });
+                  commitFocus.call(Math.min(120, Math.max(5, parsed)));
                 }
               }}
               onBlur={() => {
                 if (focusDraft === null || focusDraft === "" || Number.isNaN(parseInt(focusDraft))) {
                   setFocusDraft(null);
                 }
-                commit.flush();
+                commitFocus.flush();
               }}
             />
             <p className="text-xs text-muted-foreground">
               Duration for new timer sessions (5-120 min)
-              {focusDirty && <span> · Saving…</span>}
+              {savingFocus && <span> · Saving…</span>}
             </p>
           </div>
           <div className="space-y-2">
@@ -126,21 +142,19 @@ export function Preferences() {
                 setBreakDraft(raw);
                 const parsed = parseInt(raw);
                 if (!Number.isNaN(parsed)) {
-                  commit.call({
-                    breakDurationMinutes: Math.min(30, Math.max(1, parsed)),
-                  });
+                  commitBreak.call(Math.min(30, Math.max(1, parsed)));
                 }
               }}
               onBlur={() => {
                 if (breakDraft === null || breakDraft === "" || Number.isNaN(parseInt(breakDraft))) {
                   setBreakDraft(null);
                 }
-                commit.flush();
+                commitBreak.flush();
               }}
             />
             <p className="text-xs text-muted-foreground">
               Duration for break sessions (1-30 min)
-              {breakDirty && <span> · Saving…</span>}
+              {savingBreak && <span> · Saving…</span>}
             </p>
           </div>
         </div>
