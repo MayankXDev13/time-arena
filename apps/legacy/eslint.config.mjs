@@ -12,13 +12,6 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
-    // Monorepo: new workspaces have their own pipelines; ignore build output.
-    "apps/**/dist/**",
-    "packages/**/dist/**",
-    // Monorepo: legacy lint covers the legacy Next.js tree only.
-    // apps/* and packages/* are governed by `turbo lint`.
-    "apps/**",
-    "packages/**",
   ]),
 ]);
 
