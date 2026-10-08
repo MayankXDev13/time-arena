@@ -3,12 +3,12 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**", "app/**", "components/**", "db/**", "drizzle/**", "hooks/**", "lib/**", "stores/**", "types/**", "utils/**", "package.json", "tsconfig*.json", "vite.config.*", "next.config.*", "postcss.config.*", "index.html"],
+      "inputs": ["src/**", "app/**", "components/**", "db/**", "drizzle/**", "hooks/**", "lib/**", "stores/**", "types/**", "utils/**", "package.json", "tsconfig*.json", "vite.config.*", "vitest.config.*", "next.config.*", "postcss.config.*", "index.html"],
       "outputs": ["dist/**", ".next/**"]
     },
     "check-types": {
       "dependsOn": ["^check-types"],
-      "inputs": ["src/**", "app/**", "components/**", "db/**", "drizzle/**", "hooks/**", "lib/**", "stores/**", "types/**", "utils/**", "package.json", "tsconfig*.json", "vite.config.*", "next.config.*", "postcss.config.*", "index.html"]
+      "inputs": ["src/**", "app/**", "components/**", "db/**", "drizzle/**", "hooks/**", "lib/**", "stores/**", "types/**", "utils/**", "package.json", "tsconfig*.json", "vite.config.*", "vitest.config.*", "next.config.*", "postcss.config.*", "index.html"]
     },
     "lint": {},
     "test": {},
