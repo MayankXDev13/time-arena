@@ -1,6 +1,6 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { ProtectedLayout } from "./routes/ProtectedLayout.js";
 
 vi.mock("@/auth-client", () => ({
@@ -12,6 +12,10 @@ vi.mock("@/auth-client", () => ({
 import { authClient } from "@/auth-client";
 
 const mockedUseSession = authClient.useSession as unknown as ReturnType<typeof vi.fn>;
+
+afterEach(() => {
+  cleanup();
+});
 
 function renderAt(path: string) {
   return render(

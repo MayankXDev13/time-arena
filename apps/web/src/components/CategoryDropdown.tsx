@@ -10,6 +10,7 @@ interface CategoryDropdownProps {
   onSelect: (categoryId?: string) => void;
   className?: string;
   autoSelectDefault?: boolean;
+  disabled?: boolean;
 }
 
 const COLOR_OPTIONS = [
@@ -28,6 +29,7 @@ export function CategoryDropdown({
   onSelect,
   className,
   autoSelectDefault = true,
+  disabled = false,
 }: CategoryDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
@@ -63,8 +65,11 @@ export function CategoryDropdown({
       <Button
         variant="outline"
         type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
-        className="h-11 w-full justify-between rounded-xl border-border bg-muted/50 px-3.5 hover:bg-muted"
+        disabled={disabled}
+        onClick={() => {
+          if (!disabled) setIsOpen((prev) => !prev);
+        }}
+        className="h-11 w-full justify-between rounded-xl border-border bg-muted/50 px-3.5 hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
       >
         <div className="flex items-center gap-2.5">
           <Target className="size-[18px] shrink-0 text-foreground" strokeWidth={2.25} aria-hidden />

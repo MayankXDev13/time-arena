@@ -117,6 +117,7 @@ export function Timer() {
             selectedCategoryId={selectedCategoryId}
             onSelect={setSelectedCategoryId}
             className="w-full"
+            disabled={isRunning}
           />
         </div>
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
@@ -139,7 +140,7 @@ export function Timer() {
         </div>
         {isRunning && (
           <p className="text-center text-xs text-muted-foreground">
-            Round length locks while the clock runs.
+            Category and round length lock while the clock runs.
           </p>
         )}
       </div>
