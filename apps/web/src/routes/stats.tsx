@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useDeleteSession, useUpdateSession } from "@/hooks/useSessionHistory";
 import { useRecentSessions, useStats } from "@/hooks/useStats";
@@ -20,6 +20,18 @@ export default function StatsPage() {
   const [selectedMode, setSelectedMode] = useState<"all" | "work" | "break">("all");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editCategoryId, setEditCategoryId] = useState<string | undefined>();
+  // Mount the chart after layout: ResponsiveContainer measures its parent,
+  // and measuring during the first commit (zero-size box) logs
+  // "width(-1) and height(-1) should be greater than 0" warnings.
+  const [chartReady, setChartReady] = useState(false);
+  useEffect(() => {
+    if (typeof requestAnimationFrame === "undefined") {
+      setChartReady(true);
+      return;
+    }
+    const raf = requestAnimationFrame(() => setChartReady(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   const sessionsQuery = useRecentSessions(50, selectedCategoryId);
   const sessions = sessionsQuery.data;
@@ -180,7 +192,7 @@ export default function StatsPage() {
         )}
 
         <div className="grid grid-cols-12 gap-6 mb-8">
-          <div className="col-span-12 rounded-[20px] border border-border/70 bg-card p-6 shadow-[0_16px_44px_-28px_color-mix(in_srgb,var(--arena-ember)_40%,transparent)]">
+          <div className="col-span-12 min-w-0 rounded-[20px] border border-border/70 bg-card p-6 shadow-[0_16px_44px_-28px_color-mix(in_srgb,var(--arena-ember)_40%,transparent)]">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-display text-lg font-extrabold uppercase tracking-tight text-card-foreground">
                 Last 7 days
@@ -192,9 +204,10 @@ export default function StatsPage() {
             </div>
 
             {stats?.dailyMinutes && stats.dailyMinutes.length > 0 ? (
-              <div className="h-[320px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} margin={{ top: 20, right: 20, left: -10, bottom: 0 }}>
+              chartReady ? (
+                <div className="h-[320px] w-full min-w-0">
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                    <BarChart data={chartData} margin={{ top: 20, right: 20, left: -10, bottom: 0 }}>
                     <defs>
                       <linearGradient id="arenaGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#fb923c" />
@@ -245,7 +258,10 @@ export default function StatsPage() {
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
-              </div>
+                </div>
+              ) : (
+                <div className="h-[320px] w-full" aria-hidden />
+              )
             ) : (
               <div className="flex items-center justify-center h-[320px] text-muted-foreground text-sm">
                 No focus time recorded in the last 7 days

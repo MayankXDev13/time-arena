@@ -3,7 +3,6 @@ import { ProtectedLayout } from "./routes/ProtectedLayout.js";
 import CategoriesPage from "./routes/categories.js";
 import HomePage from "./routes/home.js";
 import ProfilePage from "./routes/profile.js";
-import SessionsPage from "./routes/sessions.js";
 import SignInPage from "./routes/signin.js";
 import SignUpPage from "./routes/signup.js";
 import StatsPage from "./routes/stats.js";
@@ -19,7 +18,6 @@ export function App() {
           <ProtectedLayout>
             <Routes>
               <Route path="/" element={<HomePage />} />
-              <Route path="/sessions" element={<SessionsPage />} />
               <Route path="/stats" element={<StatsPage />} />
               <Route path="/categories" element={<CategoriesPage />} />
               <Route path="/profile" element={<ProfilePage />} />
