@@ -57,36 +57,43 @@ jobs:
           BETTER_AUTH_SECRET: ci-dummy-secret-do-not-use
 
   # API boundary tests need a live database. They run only when the
-  # Neon test-branch secrets are configured (skipped on forks without them).
+  # Neon test-branch secrets are configured, otherwise every step below
+  # is skipped (the `secrets` context is not allowed in `jobs.<job_id>.if`,
+  # so the gate lives on the steps via `env`, which is allowed there).
   test-api:
     name: test api (needs DATABASE_URL secret)
     runs-on: ubuntu-latest
-    if: ${{ secrets.DATABASE_URL != '' }}
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
     steps:
       - uses: actions/checkout@v4
+        if: ${{ env.DATABASE_URL != '' && env.BETTER_AUTH_SECRET != '' }}
 
       - uses: actions/setup-node@v4
+        if: ${{ env.DATABASE_URL != '' && env.BETTER_AUTH_SECRET != '' }}
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - uses: oven-sh/setup-bun@v2
+        if: ${{ env.DATABASE_URL != '' && env.BETTER_AUTH_SECRET != '' }}
         with:
           bun-version: ${{ env.BUN_VERSION }}
 
       - name: Install dependencies
+        if: ${{ env.DATABASE_URL != '' && env.BETTER_AUTH_SECRET != '' }}
         run: bun install --frozen-lockfile
 
       - name: Apply migrations to test database
+        if: ${{ env.DATABASE_URL != '' && env.BETTER_AUTH_SECRET != '' }}
         run: bun --filter @repo/db db:migrate
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DIRECT_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Test api
+        if: ${{ env.DATABASE_URL != '' && env.BETTER_AUTH_SECRET != '' }}
         run: bun --filter @repo/api test
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
           API_URL: http://localhost:3000
           LOG_LEVEL: warn
 
