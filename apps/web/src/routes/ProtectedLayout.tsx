@@ -1,12 +1,19 @@
+import { useEffect } from "react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { MobileNav } from "@/components/layout/MobileNav";
+import { rehydrateTimer } from "@/stores/timerEngine";
 
 export function ProtectedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Resume ticking if a reload landed mid-round (no-op otherwise, once).
+  useEffect(() => {
+    rehydrateTimer();
+  }, []);
+
   return (
     <AuthGuard>
       <a

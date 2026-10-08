@@ -1,10 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import { ReactQueryDevtoolsPanel } from "@tanstack/react-query-devtools";
-import { StrictMode, useState } from "react";
+import { StrictMode, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { ThemeProvider } from "./components/ThemeProvider.js";
+import { bindTimerEngine } from "./stores/timerEngine.js";
 import { App } from "./App.js";
 import { TimeArenaPanel } from "./devtools/TimeArenaPanel.js";
 import "./index.css";
@@ -26,6 +27,11 @@ export function Root() {
         },
       }),
   );
+  // The store-level timer engine needs the client for post-save
+  // invalidation; bound once here so ticking survives navigation.
+  useEffect(() => {
+    bindTimerEngine(queryClient);
+  }, [queryClient]);
   return (
     <StrictMode>
       <QueryClientProvider client={queryClient}>

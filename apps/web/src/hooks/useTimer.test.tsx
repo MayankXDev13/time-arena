@@ -3,6 +3,7 @@ import { act, cleanup, render } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useTimerStore } from "@/stores/useTimerStore.js";
+import { __resetEngineForTests, pauseTimer, rehydrateTimer } from "@/stores/timerEngine.js";
 import { useTimer } from "./useTimer.js";
 
 vi.mock("@/hooks/useAuth", () => ({
@@ -59,6 +60,7 @@ function mockSessionApi() {
 }
 
 beforeEach(() => {
+  __resetEngineForTests();
   resetStore();
   vi.useFakeTimers();
   mockSessionApi();
@@ -66,6 +68,8 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  pauseTimer();
+  __resetEngineForTests();
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });
@@ -229,8 +233,7 @@ describe("useTimer stop / pause", () => {
     expect(state.elapsed).toBeGreaterThan(0);
   });
 
-  it("a stop during the start flight cancels it (no resurrection)", async () => {
-    let releasePost!: (value: { id: string }) => void;
+  it("a stop during the start flight cancels it (no resurrection)", async () => {    let releasePost!: (value: { id: string }) => void;
     const postGate = new Promise<{ id: string }>((resolve) => {
       releasePost = resolve;
     });
@@ -266,5 +269,65 @@ describe("useTimer stop / pause", () => {
     const state = useTimerStore.getState();
     expect(state.isRunning).toBe(false);
     expect(state.elapsed).toBe(0);
+  });
+
+  it("keeps ticking across unmount/remount (page navigation)", async () => {
+    const first = renderProbe();
+    await act(async () => {
+      await latest.start();
+    });
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+    expect(useTimerStore.getState().elapsed).toBeGreaterThan(0);
+
+    // Navigate away: the timer component unmounts.
+    first.unmount();
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    const away = useTimerStore.getState();
+    expect(away.isRunning).toBe(true);
+    expect(away.elapsed).toBeGreaterThanOrEqual(5);
+
+    // Navigate back: a fresh mount shows the continued round.
+    renderProbe();
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+    expect(useTimerStore.getState().elapsed).toBeGreaterThanOrEqual(7);
+
+    await act(async () => {
+      await latest.stop();
+    });
+    expect(useTimerStore.getState().isRunning).toBe(false);
+  });
+
+  it("rehydrates a persisted live round from wall-clock on boot", () => {
+    renderProbe();
+    // Simulate a reload 100s into a 25-minute round.
+    const bootTime = Date.now();
+    act(() => {
+      useTimerStore.setState({
+        isRunning: true,
+        elapsed: 90,
+        actualElapsed: 90,
+        sessionId: "s1",
+        lastStartTime: bootTime - 100_000,
+        targetDuration: 25 * 60,
+        isCompleted: false,
+      });
+    });
+
+    act(() => {
+      rehydrateTimer();
+    });
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+
+    const state = useTimerStore.getState();
+    expect(state.isRunning).toBe(true);
+    expect(state.elapsed).toBeGreaterThanOrEqual(100);
   });
 });
