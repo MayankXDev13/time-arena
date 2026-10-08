@@ -10,6 +10,7 @@ import {
   getSessionHistory,
   updateSession,
 } from "../services/session.service.js";
+import { getContributionGraph, getStats } from "../services/stats.service.js";
 
 const modeSchema = z.enum(["work", "break"]);
 
@@ -111,8 +112,7 @@ export const sessionController = {
     res.json({ success: true });
   },
 
-  async recent(req: Request, res: Response): Promise<void> {
-    const parsed = z
+  async recent(req: Request, res: Response): Promise<void> {    const parsed = z
       .object({
         limit: z.coerce.number().int().min(1).max(100).default(20),
         categoryId: z.string().uuid().optional(),
@@ -125,5 +125,20 @@ export const sessionController = {
     res.json(
       await getRecentSessions(userIdOf(req), parsed.data.limit, parsed.data.categoryId),
     );
+  },
+
+  async stats(req: Request, res: Response): Promise<void> {
+    res.json(await getStats(userIdOf(req)));
+  },
+
+  async contributions(req: Request, res: Response): Promise<void> {
+    const parsed = z
+      .object({ year: z.coerce.number().int().optional() })
+      .safeParse(req.query);
+    if (!parsed.success) {
+      res.status(400).json({ error: "invalid_query" });
+      return;
+    }
+    res.json(await getContributionGraph(userIdOf(req), parsed.data.year));
   },
 };
