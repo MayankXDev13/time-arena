@@ -1,5 +1,3 @@
-'use client';
-
 import { useTimerStore, TimerMode } from '@/stores/useTimerStore';
 import { cn } from '@/lib/utils';
 import { Timer, Coffee } from 'lucide-react';
