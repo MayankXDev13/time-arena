@@ -9,7 +9,6 @@ import {
   BarChart3,
   LogOut,
   ChevronLeft,
-  History,
   Timer,
   Settings,
   SunMoon,
@@ -47,12 +46,6 @@ export function Sidebar() {
       label: "Categories",
       hint: "Training grounds",
       icon: LayoutGrid,
-    },
-    {
-      href: "/sessions",
-      label: "Sessions",
-      hint: "Bout history",
-      icon: History,
     },
     { href: "/stats", label: "Stats", hint: "Fight record", icon: BarChart3 },
   ];

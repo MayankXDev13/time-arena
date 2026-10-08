@@ -14,6 +14,9 @@ export function useTimerDocumentTitle() {
   const workDuration = useTimerStore((s) => s.workDuration);
   const breakDuration = useTimerStore((s) => s.breakDuration);
 
+  // No cleanup reset here: resetting in cleanup would flash the default
+  // title on every tick (cleanup runs before each re-run). The body below
+  // already sets the correct title for every state.
   useEffect(() => {
     if (isRunning) {
       const target = (mode === "work" ? workDuration : breakDuration) * 60;
@@ -24,8 +27,13 @@ export function useTimerDocumentTitle() {
     } else {
       document.title = DEFAULT_TITLE;
     }
-    return () => {
-      document.title = DEFAULT_TITLE;
-    };
   }, [isRunning, elapsed, isCompleted, mode, workDuration, breakDuration]);
+
+  // Restore only on unmount.
+  useEffect(
+    () => () => {
+      document.title = DEFAULT_TITLE;
+    },
+    [],
+  );
 }

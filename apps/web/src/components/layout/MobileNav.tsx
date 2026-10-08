@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useLocation } from "react-router-dom";
-import { Timer, BarChart3, User, History, LayoutGrid } from "lucide-react";
+import { Timer, BarChart3, User, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function MobileNav() {
@@ -9,7 +9,6 @@ export function MobileNav() {
   const navItems = [
     { href: "/", label: "Timer", icon: Timer },
     { href: "/categories", label: "Areas", icon: LayoutGrid },
-    { href: "/sessions", label: "Bouts", icon: History },
     { href: "/stats", label: "Record", icon: BarChart3 },
     { href: "/profile", label: "Card", icon: User },
   ];
@@ -20,7 +19,7 @@ export function MobileNav() {
       className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/90 backdrop-blur-md"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <div className="grid grid-cols-5 items-stretch gap-1 px-2 pt-1.5">
+      <div className="grid grid-cols-4 items-stretch gap-1 px-2 pt-1.5">
         {navItems.map(({ href, label, icon: Icon }) => {
           const active = pathname === href;
           return (
