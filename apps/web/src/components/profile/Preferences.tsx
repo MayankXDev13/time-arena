@@ -1,6 +1,7 @@
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useProfile } from "@/hooks/useProfile";
+import { useDebouncedCallback } from "@/hooks/useDebouncedCallback";
 import { useThemeStore } from "@/stores/useThemeStore";
 import { useTimerStore } from "@/stores/useTimerStore";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +13,39 @@ export function Preferences() {
   const { settings, updateSettings, isLoading } = useProfile();
   const { setTheme } = useThemeStore();
   const { setBreakDuration, setWorkDuration } = useTimerStore();
+
+  // Drafts keep keystrokes local; a single PATCH commits 600ms after the
+  // last change (or immediately on blur/unmount) instead of per keystroke.
+  const [focusDraft, setFocusDraft] = useState<string | null>(null);
+  const [breakDraft, setBreakDraft] = useState<string | null>(null);
+  const updateSettingsRef = useRef(updateSettings);
+  updateSettingsRef.current = updateSettings;
+  const commit = useDebouncedCallback(
+    (patch: { defaultTimerMinutes?: number; breakDurationMinutes?: number }) =>
+      void updateSettingsRef.current(patch),
+    600,
+  );
+
+  useEffect(() => () => commit.flush(), [commit.flush]);
+
+  // A draft reconciles once the server echoes the same value back.
+  useEffect(() => {
+    if (
+      focusDraft !== null &&
+      parseInt(focusDraft) === (settings?.defaultTimerMinutes ?? 25)
+    ) {
+      setFocusDraft(null);
+    }
+    if (
+      breakDraft !== null &&
+      parseInt(breakDraft) === (settings?.breakDurationMinutes ?? 5)
+    ) {
+      setBreakDraft(null);
+    }
+  }, [settings, focusDraft, breakDraft]);
+
+  const focusDirty = focusDraft !== null;
+  const breakDirty = breakDraft !== null;
 
   useEffect(() => {
     if (settings?.breakDurationMinutes) {
@@ -57,13 +91,27 @@ export function Preferences() {
               type="number"
               min={5}
               max={120}
-              value={settings.defaultTimerMinutes ?? 25}
-              onChange={(e) =>
-                updateSettings({ defaultTimerMinutes: parseInt(e.target.value) || 25 })
-              }
+              value={focusDraft ?? (settings.defaultTimerMinutes ?? 25)}
+              onChange={(e) => {
+                const raw = e.target.value;
+                setFocusDraft(raw);
+                const parsed = parseInt(raw);
+                if (!Number.isNaN(parsed)) {
+                  commit.call({
+                    defaultTimerMinutes: Math.min(120, Math.max(5, parsed)),
+                  });
+                }
+              }}
+              onBlur={() => {
+                if (focusDraft === null || focusDraft === "" || Number.isNaN(parseInt(focusDraft))) {
+                  setFocusDraft(null);
+                }
+                commit.flush();
+              }}
             />
             <p className="text-xs text-muted-foreground">
               Duration for new timer sessions (5-120 min)
+              {focusDirty && <span> · Saving…</span>}
             </p>
           </div>
           <div className="space-y-2">
@@ -72,13 +120,27 @@ export function Preferences() {
               type="number"
               min={1}
               max={30}
-              value={settings.breakDurationMinutes ?? 5}
-              onChange={(e) =>
-                updateSettings({ breakDurationMinutes: parseInt(e.target.value) || 5 })
-              }
+              value={breakDraft ?? (settings.breakDurationMinutes ?? 5)}
+              onChange={(e) => {
+                const raw = e.target.value;
+                setBreakDraft(raw);
+                const parsed = parseInt(raw);
+                if (!Number.isNaN(parsed)) {
+                  commit.call({
+                    breakDurationMinutes: Math.min(30, Math.max(1, parsed)),
+                  });
+                }
+              }}
+              onBlur={() => {
+                if (breakDraft === null || breakDraft === "" || Number.isNaN(parseInt(breakDraft))) {
+                  setBreakDraft(null);
+                }
+                commit.flush();
+              }}
             />
             <p className="text-xs text-muted-foreground">
               Duration for break sessions (1-30 min)
+              {breakDirty && <span> · Saving…</span>}
             </p>
           </div>
         </div>
