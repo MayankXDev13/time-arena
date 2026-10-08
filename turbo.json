@@ -3,12 +3,12 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**", "package.json", "tsconfig*.json", "vite.config.*", "index.html"],
-      "outputs": ["dist/**"]
+      "inputs": ["src/**", "app/**", "components/**", "db/**", "drizzle/**", "hooks/**", "lib/**", "stores/**", "types/**", "utils/**", "package.json", "tsconfig*.json", "vite.config.*", "next.config.*", "postcss.config.*", "index.html"],
+      "outputs": ["dist/**", ".next/**"]
     },
     "check-types": {
       "dependsOn": ["^check-types"],
-      "inputs": ["src/**", "package.json", "tsconfig*.json", "vite.config.*", "index.html"]
+      "inputs": ["src/**", "app/**", "components/**", "db/**", "drizzle/**", "hooks/**", "lib/**", "stores/**", "types/**", "utils/**", "package.json", "tsconfig*.json", "vite.config.*", "next.config.*", "postcss.config.*", "index.html"]
     },
     "lint": {},
     "test": {},
