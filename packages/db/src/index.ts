@@ -1,9 +1,14 @@
-// Skeleton boundary for the database package.
-// Real schema + client move here in a later slice; this stub keeps
-// `turbo build` ordering (apps/api depends on @repo/db) verifiable now.
+import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-http";
 
-export const DB_PACKAGE = "@repo/db";
+import * as authSchema from "./auth-schema.js";
 
-export function placeholder(): string {
-  return DB_PACKAGE;
-}
+const sql = neon(process.env.DATABASE_URL ?? "");
+
+// Mirrors the legacy app: plain client here, schema handed to the
+// better-auth drizzle adapter by the consumer (apps/api).
+export const db = drizzle(sql);
+
+export { authSchema };
+
+export * from "./auth-schema.js";
