@@ -9,7 +9,7 @@ import { App } from "./App.js";
 import { TimeArenaPanel } from "./devtools/TimeArenaPanel.js";
 import "./index.css";
 
-function Root() {
+export function Root() {
   // Server state lives here, never in zustand. Fresh-but-calm defaults:
   // data goes stale after 30s, sticks around 5min, one retry, and refocus
   // revalidates (background refetch) instead of suspensing.
@@ -34,11 +34,10 @@ function Root() {
             <App />
           </BrowserRouter>
         </ThemeProvider>
-      </QueryClientProvider>
-      {/* Mounted once: framework adapter + library and product panels.
-          eventBusConfig bridges to the Vite server bus (console piping,
-          marketplace). Production builds strip this import and JSX. */}
-      <TanStackDevtools
+        {/* Inside the provider: panels (Query + Time Arena) read the same
+            QueryClient via useQueryClient. Production builds strip this
+            import and JSX. */}
+        <TanStackDevtools
         config={{ position: "bottom-right" }}
         eventBusConfig={{ connectToServerBus: true }}
         plugins={[
@@ -53,11 +52,16 @@ function Root() {
           },
         ]}
       />
+      </QueryClientProvider>
     </StrictMode>
   );
 }
 
-const root = document.getElementById("root");
-if (!root) throw new Error("missing #root");
+// Auto-mount only outside tests: importing this module in vitest must not
+// touch the document (tests render <Root /> explicitly).
+if (import.meta.env.MODE !== "test") {
+  const root = document.getElementById("root");
+  if (!root) throw new Error("missing #root");
 
-createRoot(root).render(<Root />);
+  createRoot(root).render(<Root />);
+}
