@@ -1,0 +1,24 @@
+# Build contexts stay small: deps reinstall from manifests inside the image.
+node_modules
+.turbo
+dist
+.next
+out
+coverage
+
+.git
+.gitignore
+.turbo/
+apps/*/node_modules
+packages/*/node_modules
+
+# Never bake secrets into images; compose injects them at runtime.
+.env
+apps/*/.env
+packages/*/.env
+*.pem
+
+# Local-only noise.
+.DS_Store
+*.tsbuildinfo
+.vercel

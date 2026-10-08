@@ -1,0 +1,72 @@
+# Local Docker setup: `docker compose up --build`
+# Web on http://localhost:8080, API on http://localhost:3000.
+#
+# DATABASE DRIVER NOTE: @repo/db currently uses drizzle-orm/neon-http
+# (@neondatabase/serverless), which only speaks the Neon HTTP protocol.
+# The `db` service below is vanilla Postgres for future local parity, but
+# the API cannot use it until the driver is swapped to node-postgres
+# (drizzle-orm/node-postgres + pg). Until then, point DATABASE_URL at Neon:
+#   DATABASE_URL="postgresql://user:password@ep-xxx.neon.tech/dbname?sslmode=require" docker compose up --build db api web
+# or export it (plus BETTER_AUTH_SECRET, see apps/api/.env.example) first.
+# The default below targets the local `db` service for when the swap lands.
+#
+# Required env (or export before `docker compose up`):
+#   BETTER_AUTH_SECRET  # openssl rand -base64 32
+#   DATABASE_URL        # defaults to local db service (see note above)
+#   GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET (optional, social sign-in parity)
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-timearena}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-timearena}
+      POSTGRES_DB: ${POSTGRES_DB:-timearena}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-timearena}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+      NODE_ENV: production
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      API_URL: ${API_URL:-http://localhost:3000}
+      VITE_WEB_URL: ${VITE_WEB_URL:-http://localhost:8080}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://timearena:timearena@db:5432/timearena?sslmode=disable}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET (openssl rand -base64 32)}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-}
+        VITE_WEB_URL: ${VITE_WEB_URL:-http://localhost:8080}
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  pgdata:

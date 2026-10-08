@@ -1,0 +1,130 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BUN_VERSION: "1.4.0"
+  NODE_VERSION: "20"
+
+jobs:
+  # Lint + typecheck + build + DB-less tests. Needs no secrets.
+  verify:
+    name: lint / typecheck / build / test (no DB)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint
+        # apps/legacy is frozen pending deletion and its eslint run
+        # currently fails on main, so CI covers the active units only.
+        run: bunx turbo lint --filter=@repo/api --filter=@repo/web --filter=@repo/db --filter=@repo/types
+
+      - name: Typecheck
+        run: bunx turbo check-types --filter=@repo/api --filter=@repo/web --filter=@repo/db --filter=@repo/types
+
+      - name: Test (DB-less packages)
+        # API tests hit a live database (Neon), so they run in the
+        # `test-api` job below. Everything else runs here without secrets.
+        run: bunx turbo test --filter=@repo/web --filter=@repo/types --filter=@repo/db
+
+      - name: Build (active units)
+        # apps/legacy is frozen pending deletion, so it is excluded from
+        # the build. `...` still builds workspace dependencies (@repo/db,
+        # @repo/types) of api/web.
+        run: bunx turbo build --filter=@repo/api... --filter=@repo/web...
+        env:
+          # Dummy values so builds that read env at build time don't fail.
+          # Never used to connect: no test or migration runs in this job.
+          DATABASE_URL: postgresql://user:password@localhost:5432/dbname?sslmode=require
+          BETTER_AUTH_SECRET: ci-dummy-secret-do-not-use
+
+  # API boundary tests need a live database. They run only when the
+  # Neon test-branch secrets are configured, otherwise every step below
+  # is skipped (the `secrets` context is not allowed in `jobs.<job_id>.if`,
+  # so the gate lives on the steps via `env`, which is allowed there).
+  test-api:
+    name: test api (needs DATABASE_URL secret)
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+        if: ${{ env.DATABASE_URL != '' && env.BETTER_AUTH_SECRET != '' }}
+
+      - uses: actions/setup-node@v4
+        if: ${{ env.DATABASE_URL != '' && env.BETTER_AUTH_SECRET != '' }}
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - uses: oven-sh/setup-bun@v2
+        if: ${{ env.DATABASE_URL != '' && env.BETTER_AUTH_SECRET != '' }}
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install dependencies
+        if: ${{ env.DATABASE_URL != '' && env.BETTER_AUTH_SECRET != '' }}
+        run: bun install --frozen-lockfile
+
+      - name: Build dependencies
+        # @repo/api resolves @repo/db via its built dist; this job runs the
+        # package script directly (not through turbo), so build first.
+        if: ${{ env.DATABASE_URL != '' && env.BETTER_AUTH_SECRET != '' }}
+        run: bunx turbo build --filter=@repo/api...
+
+      - name: Apply migrations to test database
+        if: ${{ env.DATABASE_URL != '' && env.BETTER_AUTH_SECRET != '' }}
+        run: bun --filter @repo/db db:migrate
+        env:
+          DIRECT_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Test api
+        if: ${{ env.DATABASE_URL != '' && env.BETTER_AUTH_SECRET != '' }}
+        run: bun --filter @repo/api test
+        env:
+          API_URL: http://localhost:3000
+          LOG_LEVEL: warn
+
+  docker:
+    name: docker build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build api image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: false
+          tags: time-arena-api:ci
+
+      - name: Build web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: false
+          tags: time-arena-web:ci
+          build-args: |
+            VITE_WEB_URL=http://localhost:8080
