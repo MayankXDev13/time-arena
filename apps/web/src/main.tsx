@@ -1,9 +1,12 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { TanStackDevtools } from "@tanstack/react-devtools";
+import { ReactQueryDevtoolsPanel } from "@tanstack/react-query-devtools";
 import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { ThemeProvider } from "./components/ThemeProvider.js";
 import { App } from "./App.js";
+import { TimeArenaPanel } from "./devtools/TimeArenaPanel.js";
 import "./index.css";
 
 function Root() {
@@ -32,6 +35,24 @@ function Root() {
           </BrowserRouter>
         </ThemeProvider>
       </QueryClientProvider>
+      {/* Mounted once: framework adapter + library and product panels.
+          eventBusConfig bridges to the Vite server bus (console piping,
+          marketplace). Production builds strip this import and JSX. */}
+      <TanStackDevtools
+        config={{ position: "bottom-right" }}
+        eventBusConfig={{ connectToServerBus: true }}
+        plugins={[
+          {
+            name: "TanStack Query",
+            render: <ReactQueryDevtoolsPanel />,
+            defaultOpen: true,
+          },
+          {
+            name: "Time Arena",
+            render: <TimeArenaPanel />,
+          },
+        ]}
+      />
     </StrictMode>
   );
 }
