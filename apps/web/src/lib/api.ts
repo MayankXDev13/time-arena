@@ -194,15 +194,3 @@ export const api = {
     });
   },
 };
-
-export const qk = {
-  history: (params: Record<string, unknown>) => ["history", params] as const,
-  recent: (limit: number, categoryId?: string) =>
-    ["recent", limit, categoryId ?? null] as const,
-  stats: ["stats"] as const,
-  contributions: (year: number) => ["contributions", year] as const,
-  categories: ["categories"] as const,
-  settings: ["settings"] as const,
-  profile: ["profile"] as const,
-  linkedAccounts: ["linkedAccounts"] as const,
-};

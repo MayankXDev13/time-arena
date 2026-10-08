@@ -1,6 +1,7 @@
 import { useCallback, useRef, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { invalidateSessionData } from '@/lib/query-keys';
 import { useAuth } from '@/hooks/useAuth';
 import { useTimerStore, TimerMode } from '@/stores/useTimerStore';
 import { showTimerNotification, getCompletedNotification, requestNotificationPermission } from '@/utils/notifications';
@@ -29,10 +30,7 @@ export function useTimer() {
   const queryClient = useQueryClient();
 
   const invalidateSessionQueries = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ["history"] });
-    queryClient.invalidateQueries({ queryKey: ["recent"] });
-    queryClient.invalidateQueries({ queryKey: ["stats"] });
-    queryClient.invalidateQueries({ queryKey: ["contributions"] });
+    void invalidateSessionData(queryClient);
   }, [queryClient]);
 
   const clearIntervalRef = useCallback(() => {

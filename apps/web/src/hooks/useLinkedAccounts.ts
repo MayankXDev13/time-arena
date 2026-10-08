@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { authClient } from "@/auth-client";
-import { qk } from "@/lib/api";
+import { accountKeys } from "@/lib/query-keys";
 import { useAuth } from "@/hooks/useAuth";
 
 async function fetchLinkedAccounts(): Promise<{ providerId: string }[]> {
@@ -24,7 +24,7 @@ export function useLinkedAccounts() {
   const { user } = useAuth();
 
   const query = useQuery({
-    queryKey: qk.linkedAccounts,
+    queryKey: accountKeys.list(),
     queryFn: fetchLinkedAccounts,
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000,

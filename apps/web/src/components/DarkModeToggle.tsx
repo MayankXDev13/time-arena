@@ -2,19 +2,20 @@
 import { Moon, Sun } from "lucide-react";
 import { useThemeStore } from "@/stores/useThemeStore";
 import { Button } from "@/components/ui/button";
-import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
+import { useUpdateSettings } from "@/hooks/useSettings";
 
 export function DarkModeToggle() {
   const { user } = useAuth();
   const theme = useThemeStore((state) => state.theme);
   const setTheme = useThemeStore((state) => state.setTheme);
+  const updateSettings = useUpdateSettings();
 
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light";
     setTheme(newTheme);
     if (user?.id) {
-      api.updateSettings({ theme: newTheme });
+      updateSettings.mutate({ theme: newTheme });
     }
   };
 

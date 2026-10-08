@@ -1,8 +1,13 @@
 
 import { useEffect, useRef, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { api, qk } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  useCategories,
+  useCreateCategory,
+  useDeleteCategory,
+  useSeedCategories,
+  useUpdateCategory,
+} from "@/hooks/useCategories";
 import { useSidebarStore } from "@/stores/useSidebarStore";
 import { Button } from "@/components/ui/button";
 import { COLOR_OPTIONS } from "@/components/CategoryDropdown";
@@ -12,28 +17,11 @@ import { Plus, Trash2, Edit2, Check, X } from "lucide-react";
 export default function CategoriesPage() {
   const { user } = useAuth();
   const { isOpen } = useSidebarStore();
-  const queryClient = useQueryClient();
-  const { data: categories } = useQuery({
-    queryKey: qk.categories,
-    queryFn: api.listCategories,
-    enabled: !!user?.id,
-  });
-  const invalidate = () =>
-    queryClient.invalidateQueries({ queryKey: qk.categories });
-  const createCategory = useMutation({
-    mutationFn: (input: { name: string; color: string }) =>
-      api.createCategory(input),
-    onSuccess: invalidate,
-  });
-  const updateCategory = useMutation({
-    mutationFn: (input: { id: string; name: string; color: string }) =>
-      api.updateCategory(input.id, { name: input.name, color: input.color }),
-    onSuccess: invalidate,
-  });
-  const deleteCategory = useMutation({
-    mutationFn: (id: string) => api.deleteCategory(id),
-    onSuccess: invalidate,
-  });
+  const { data: categories } = useCategories();
+  const createCategory = useCreateCategory();
+  const updateCategory = useUpdateCategory();
+  const deleteCategory = useDeleteCategory();
+  const seedCategories = useSeedCategories();
 
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryColor, setNewCategoryColor] = useState(COLOR_OPTIONS[0].value);
@@ -53,17 +41,14 @@ export default function CategoriesPage() {
     if (seedStarted.current) return;
     seedStarted.current = true;
 
-    api
-      .seedCategories()
-      .then(() =>
-        queryClient.invalidateQueries({ queryKey: qk.categories }),
-      )
-      .catch((err) => {
+    seedCategories.mutate(undefined, {
+      onError: (err) => {
         // Genuine failure: allow a later run to retry.
         seedStarted.current = false;
         console.error("Failed to seed default categories:", err);
-      });
-  }, [user?.id, categories, queryClient]);
+      },
+    });
+  }, [user?.id, categories, seedCategories]);
 
   const handleCreate = async () => {
     if (!user?.id || !newCategoryName.trim()) return;

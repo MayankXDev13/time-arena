@@ -1,8 +1,12 @@
 
 import { useState, useEffect } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { api, qk } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  useDeleteSession,
+  useSessionHistory,
+  useUpdateSession,
+} from "@/hooks/useSessionHistory";
+import { useCategories } from "@/hooks/useCategories";
 import { useSidebarStore } from "@/stores/useSidebarStore";
 import { useThemeSync } from "@/hooks/useThemeSync";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -56,17 +60,13 @@ export default function SessionsPage() {
   
   useThemeSync();
 
-  const queryClient = useQueryClient();
   const historyParams = {
     limit: 10,
     cursor: cursors[page],
     categoryId: categoryFilter,
   };
-  const { data: sessions } = useQuery({
-    queryKey: qk.history(historyParams),
-    queryFn: () => api.getHistory(historyParams),
-    enabled: !!user?.id,
-  });
+  const historyQuery = useSessionHistory(historyParams);
+  const sessions = historyQuery.data;
 
   // Update cursors when we get new data
   useEffect(() => {
@@ -75,25 +75,8 @@ export default function SessionsPage() {
     }
   }, [sessions?.nextCursor]);
 
-  const invalidate = () =>
-    queryClient.invalidateQueries({ queryKey: ["history"] });
-  const deleteSession = useMutation({
-    mutationFn: (id: string) => api.deleteSession(id),
-    onSuccess: invalidate,
-  });
-  const updateSession = useMutation({
-    mutationFn: (input: {
-      id: string;
-      categoryId?: string;
-      duration: number;
-      mode: "work" | "break";
-    }) => api.updateSession(input.id, {
-      categoryId: input.categoryId ?? null,
-      duration: input.duration,
-      mode: input.mode,
-    }),
-    onSuccess: invalidate,
-  });
+  const deleteSession = useDeleteSession();
+  const updateSession = useUpdateSession();
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString("en-US", {
@@ -150,7 +133,7 @@ export default function SessionsPage() {
     return null;
   }
 
-  if (!sessions) {
+  if (historyQuery.isLoading) {
     return (
       <div className={`min-h-screen bg-background transition-all duration-300 ${
         isOpen ? "md:pl-72" : "md:pl-20"
@@ -164,6 +147,35 @@ export default function SessionsPage() {
             <div className="h-32 bg-muted rounded-lg"></div>
             <div className="h-64 bg-muted rounded-lg"></div>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (historyQuery.isError) {
+    return (
+      <div className={`min-h-screen bg-background transition-all duration-300 ${
+        isOpen ? "md:pl-72" : "md:pl-20"
+      }`}>
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+          <Card>
+            <CardContent className="py-12 text-center">
+              <p className="font-medium text-foreground text-lg">Couldn&apos;t load sessions</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {historyQuery.error instanceof Error
+                  ? historyQuery.error.message
+                  : "Something went wrong reaching the API."}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-4"
+                onClick={() => historyQuery.refetch()}
+              >
+                Retry
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -187,6 +199,11 @@ export default function SessionsPage() {
           <CardContent>
             <div className="flex items-center justify-end gap-3 mb-6">
               <Filter className="w-4 h-4 text-muted-foreground" />
+              {historyQuery.isFetching && !historyQuery.isLoading && (
+                <span className="text-xs text-muted-foreground" role="status">
+                  Refreshing…
+                </span>
+              )}
               <CategoryDropdown
                 selectedCategoryId={categoryFilter}
                 onSelect={(id) => {
@@ -263,6 +280,7 @@ export default function SessionsPage() {
                         variant="destructive"
                         size="sm"
                         onClick={() => handleDelete(session.id)}
+                        disabled={deleteSession.isPending}
                         className="h-8 px-2"
                       >
                         <Trash2 className="w-4 h-4 mr-1" />
@@ -363,7 +381,7 @@ export default function SessionsPage() {
             <Button variant="outline" onClick={() => setEditingSession(null)}>
               Cancel
             </Button>
-            <Button onClick={handleUpdate}>
+            <Button onClick={handleUpdate} disabled={updateSession.isPending}>
               Save Changes
             </Button>
           </DialogFooter>
@@ -374,12 +392,7 @@ export default function SessionsPage() {
 }
 
 function CategoryBadge({ categoryId }: { categoryId?: string | null }) {
-  const { user } = useAuth();
-  const { data: categories } = useQuery({
-    queryKey: qk.categories,
-    queryFn: api.listCategories,
-    enabled: !!user?.id,
-  });
+  const { data: categories } = useCategories();
 
   if (!categories) return <span className="text-sm text-muted-foreground">-</span>;
 

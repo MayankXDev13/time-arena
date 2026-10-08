@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { api, qk } from "@/lib/api";
-import { useAuth } from "@/hooks/useAuth";
+import { useCategories } from "@/hooks/useCategories";
 import { ChevronDown, Check, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -32,13 +30,8 @@ export function CategoryDropdown({
   disabled = false,
 }: CategoryDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const { user } = useAuth();
 
-  const { data: categories } = useQuery({
-    queryKey: qk.categories,
-    queryFn: api.listCategories,
-    enabled: !!user?.id,
-  });
+  const { data: categories } = useCategories();
 
 
   useEffect(() => {

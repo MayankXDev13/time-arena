@@ -7,7 +7,22 @@ import { App } from "./App.js";
 import "./index.css";
 
 function Root() {
-  const [queryClient] = useState(() => new QueryClient());
+  // Server state lives here, never in zustand. Fresh-but-calm defaults:
+  // data goes stale after 30s, sticks around 5min, one retry, and refocus
+  // revalidates (background refetch) instead of suspensing.
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 30_000,
+            gcTime: 5 * 60_000,
+            retry: 1,
+            refetchOnWindowFocus: true,
+          },
+        },
+      }),
+  );
   return (
     <StrictMode>
       <QueryClientProvider client={queryClient}>
