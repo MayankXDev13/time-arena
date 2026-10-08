@@ -12,3 +12,4 @@ export const db = drizzle(sql);
 export { authSchema };
 
 export * from "./auth-schema.js";
+export * from "./sessions.js";
