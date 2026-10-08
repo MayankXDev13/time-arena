@@ -2,16 +2,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useProfile } from "@/hooks/useProfile";
 import { useDebouncedCallback } from "@/hooks/useDebouncedCallback";
-import { useThemeStore } from "@/stores/useThemeStore";
 import { useTimerStore } from "@/stores/useTimerStore";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function Preferences() {
   const { settings, updateSettings, isLoading } = useProfile();
-  const { setTheme } = useThemeStore();
   const { setBreakDuration, setWorkDuration } = useTimerStore();
 
   // Drafts keep keystrokes local; a single PATCH commits 600ms after the
@@ -84,16 +81,6 @@ export function Preferences() {
       </Card>
     );
   }
-
-  const handleThemeChange = (value: string) => {
-    updateSettings({ theme: value });
-    if (value === "system") {
-      const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      setTheme(systemPrefersDark ? "dark" : "light");
-    } else {
-      setTheme(value as "light" | "dark");
-    }
-  };
 
   return (
     <Card>
@@ -184,28 +171,6 @@ export function Preferences() {
               checked={settings.soundEnabled ?? true}
               onCheckedChange={(checked) => updateSettings({ soundEnabled: checked })}
             />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <label className="text-sm font-medium">Theme</label>
-              <p className="text-sm text-muted-foreground">
-                Choose your preferred theme
-              </p>
-            </div>
-            <Select
-              value={settings.theme ?? "system"}
-              onValueChange={handleThemeChange}
-            >
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="Theme" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="light">Light</SelectItem>
-                <SelectItem value="dark">Dark</SelectItem>
-                <SelectItem value="system">System</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </div>
       </CardContent>
