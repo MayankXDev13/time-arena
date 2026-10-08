@@ -2,6 +2,7 @@ import { useCallback, useRef, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { invalidateSessionData } from '@/lib/query-keys';
+import { timeArenaEvents } from '@/devtools/time-arena-events';
 import { useAuth } from '@/hooks/useAuth';
 import { useTimerStore, TimerMode } from '@/stores/useTimerStore';
 import { showTimerNotification, getCompletedNotification, requestNotificationPermission } from '@/utils/notifications';
@@ -63,6 +64,12 @@ export function useTimer() {
     });
 
     startTimeRef.current = Date.now();
+
+    timeArenaEvents.emit('timer-started', {
+      mode,
+      categoryId: selectedCategoryId ?? null,
+      targetDuration,
+    });
 
     intervalRef.current = setInterval(() => {
       const currentActualElapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
@@ -137,6 +144,8 @@ export function useTimer() {
         endedAt: endTime,
         duration,
       });
+      timeArenaEvents.emit('timer-stopped', { mode, duration, completed: false });
+      timeArenaEvents.emit('session-saved', { id: sessionId, mode, duration });
       invalidateSessionQueries();
     }
 
